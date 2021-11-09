@@ -33,6 +33,6 @@ jobs:
                 --data "{
                   \"event_type\": \"notify-build-failure\",
                   \"client_payload\": {
-                    \"repoName\": \"module-ballerinax-aws.sqs\"
+                    \"repoName\": \"module-ballerinax-aws.dynamodb\"
                   }
                 }"
