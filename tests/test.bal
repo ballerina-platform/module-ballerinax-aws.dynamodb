@@ -97,7 +97,6 @@ function testCreateTable() returns error?{
     createTablesResult = check dynamoDBClient->createTable(payload);
     test:assertEquals(createTablesResult.TableDescription?.TableName, secondaryTable,
                       "SecondaryThread table is not created.");
-    runtime:sleep(20);
     log:printInfo("Testing CreateTable is completed.");
 }
 
@@ -113,6 +112,10 @@ function testDescribeTable() returns error?{
 @test:Config{
     dependsOn: [testDescribeTable]
 }
+function updateTable() returns error?{
+    _ = check executeWithRetry(testUpdateTable, 20, 3);
+}
+
 function testUpdateTable() returns error? {
     TableUpdateRequest request = {
         TableName: mainTable,
@@ -131,7 +134,7 @@ function testUpdateTable() returns error? {
 }
 
 @test:Config {
-    dependsOn: [testUpdateTable]
+    dependsOn: [updateTable]
 }
 function testListTables() returns error?{
     stream<string, error?> response = check dynamoDBClient->listTables();
@@ -480,6 +483,10 @@ function testDescribeLimits() returns error? {
 }
 
 @test:AfterSuite
+function deleteTables() returns error? {
+    _ = check executeWithRetry(testDeleteTable, 20, 3);
+}
+
 function testDeleteTable() returns error? {
     TableDeleteResponse response = check dynamoDBClient->deleteTable(mainTable);
     log:printInfo(response.toString());
@@ -488,4 +495,44 @@ function testDeleteTable() returns error? {
     log:printInfo(response.toString());
     test:assertEquals(response.TableDescription?.TableName, secondaryTable, "Expected table is not deleted.");
     log:printInfo("Testing DeleteTable is completed.");
+}
+
+# Executes a given function with retry. If there is no error the function will 
+# immediately return. If there's errors it will retry as per given parameters. 
+# 
+# + testFunc - Test function to execute
+# + delayBetweenRetries - Time delay between two retries in seconds
+# + maxRetryCount - Maximum count to retry before giving up
+# + errorMsg - (Optional) Part or exact error message to check. Retry will happen 
+#               only if this matches with the error that is returned by executing the  testFunc. 
+#               If not provided, retry will happen for any error returned by the testFunc. 
+# + return - Stream of Calendars on success or else an error
+function executeWithRetry(function () returns error? testFunc, decimal delayBetweenRetries,
+      int maxRetryCount, string? errorMsg = ()) returns error? {
+    
+    int currentRetryCount = 0;
+    error? testResult = ();
+    while (currentRetryCount < maxRetryCount) {
+        if(currentRetryCount > 0) {
+            runtime:sleep (delayBetweenRetries);
+            log:printWarn("Function returned an error. Retrying for " 
+                + (currentRetryCount + 1).toString() + "th time");
+        }
+        testResult = testFunc();
+        currentRetryCount = currentRetryCount +1;
+        if testResult is error {
+            if(errorMsg == ()) {
+                continue;
+            } else {
+                if(string:includes(testResult.message(), errorMsg, 0)) {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        } else {
+            break;
+        }
+    }
+    return testResult;
 }
