@@ -1,6 +1,7 @@
 [package]
 org = "ballerinax"
 name = "aws.dynamodb"
+icon = "icon.png"
 license= ["Apache-2.0"]
 authors = ["Ballerina"]
 version= "1.0.0"
