@@ -8,7 +8,7 @@ The `ballerinax/aws.dynamodb` is a [Ballerina](https://ballerina.io/) connector 
 ### Compatibility
 |                       | Version         |  
 |-----------------------|-----------------|
-| Ballerina Language    | Swan Lake Beta3 |
+| Ballerina Language    | Swan Lake Beta6 |
 | Amazon DynamoDB API   | 20120810        |
 
 ## Report issues
