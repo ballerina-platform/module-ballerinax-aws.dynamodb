@@ -6,10 +6,10 @@ The `ballerinax/aws.dynamodb` is a [Ballerina](https://ballerina.io/) connector 
 * Perform AWS DynamoDB related operations programmatically. The `ballerinax/aws.dynamodb` module provides this capability.
 
 ### Compatibility
-|                       | Version         |  
-|-----------------------|-----------------|
-| Ballerina Language    | Swan Lake Beta6 |
-| Amazon DynamoDB API   | 20120810        |
+|                       | Version            |  
+|-----------------------|--------------------|
+| Ballerina Language    | Swan Lake 2201.0.0 |
+| Amazon DynamoDB API   | 20120810           |
 
 ## Report issues
 To report bugs, request new features, start new discussions, view project boards, etc., go to the [Ballerina Extended Library repository](https://github.com/ballerina-platform/ballerina-extended-library)
