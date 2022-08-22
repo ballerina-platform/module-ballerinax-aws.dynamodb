@@ -36,15 +36,31 @@ public isolated client class Client {
     # + awsDynamoDBConfig - Configuration required to initialize the client
     # + httpConfig - HTTP configuration
     # + return - An error on failure of initialization or else `()`
-    public isolated function init(ConnectionConfig awsDynamoDBConfig, http:ClientConfiguration httpConfig ={})
-                                  returns error? {
-        self.accessKeyId = awsDynamoDBConfig.awsCredentials.accessKeyId;
-        self.secretAccessKey = awsDynamoDBConfig.awsCredentials.secretAccessKey;
-        self.securityToken = awsDynamoDBConfig.awsCredentials?.securityToken;
-        self.region = awsDynamoDBConfig.region;
+    public isolated function init(ConnectionConfig config) returns error? {
+        self.accessKeyId = config.awsCredentials.accessKeyId;
+        self.secretAccessKey = config.awsCredentials.secretAccessKey;
+        self.securityToken = config.awsCredentials?.securityToken;
+        self.region = config.region;
         self.awsHost = AWS_SERVICE + DOT + self.region + DOT + AWS_HOST;
         string endpoint = HTTPS + self.awsHost;
-        self.awsDynamoDb = check new(endpoint, httpConfig);
+
+        http:ClientConfiguration httpClientConfig = {
+            httpVersion: config.httpVersion,
+            http1Settings: {...config.http1Settings},
+            http2Settings: config.http2Settings,
+            timeout: config.timeout,
+            forwarded: config.forwarded,
+            poolConfig: config.poolConfig,
+            cache: config.cache,
+            compression: config.compression,
+            circuitBreaker: config.circuitBreaker,
+            retryConfig: config.retryConfig,
+            responseLimits: config.responseLimits,
+            secureSocket: config.secureSocket,
+            proxy: config.proxy,
+            validation: config.validation
+        };
+        self.awsDynamoDb = check new(endpoint, httpClientConfig);
     }
 
     # Create a table. The CreateTable operation adds a new table to your account. In an AWS account, table names must be
