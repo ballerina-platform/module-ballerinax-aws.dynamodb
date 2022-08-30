@@ -14,15 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Represents AWS client configuration.
-#
-# + awsCredentials - AWS credentials  
-# + region - AWS region  
-public type ConnectionConfig record {
-    AwsCredentials|AwsTemporaryCredentials awsCredentials;
-    string region;
-};
-
 # Represents AWS credentials.
 #
 # + accessKeyId - AWS access key  
