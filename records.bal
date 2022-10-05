@@ -14,12 +14,29 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerinax/'client.config;
+
+# Represents the AWS DynamoDB Connector configurations.
+@display {label: "Connection Config"}
+public type ConnectionConfig record {|
+    *config:ConnectionConfig;
+    never auth?;
+    # AWS credentials
+    AwsCredentials|AwsTemporaryCredentials awsCredentials;
+    # AWS Region
+    string region;
+|};
+
 # Represents AWS credentials.
 #
 # + accessKeyId - AWS access key  
 # + secretAccessKey - AWS secret key
 public type AwsCredentials record {
     string accessKeyId;
+    @display {
+        label: "",
+        kind: "password"
+    }
     string secretAccessKey;
 };
 
@@ -30,7 +47,15 @@ public type AwsCredentials record {
 # + securityToken - AWS secret token
 public type AwsTemporaryCredentials record {
     string accessKeyId;
+    @display {
+        label: "",
+        kind: "password"
+    }
     string secretAccessKey;
+    @display {
+        label: "",
+        kind: "password"
+    }
     string securityToken;   
 };
 
