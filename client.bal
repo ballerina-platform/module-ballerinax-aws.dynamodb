@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/http;
+import ballerinax/'client.config;
 
 # The Ballerina AWS DynamoDB connector provides the capability to access AWS Simple Email Service related operations.
 # This connector lets you to to send email messages to your customers.
@@ -44,22 +45,7 @@ public isolated client class Client {
         self.awsHost = AWS_SERVICE + DOT + self.region + DOT + AWS_HOST;
         string endpoint = HTTPS + self.awsHost;
 
-        http:ClientConfiguration httpClientConfig = {
-            httpVersion: config.httpVersion,
-            http1Settings: {...config.http1Settings},
-            http2Settings: config.http2Settings,
-            timeout: config.timeout,
-            forwarded: config.forwarded,
-            poolConfig: config.poolConfig,
-            cache: config.cache,
-            compression: config.compression,
-            circuitBreaker: config.circuitBreaker,
-            retryConfig: config.retryConfig,
-            responseLimits: config.responseLimits,
-            secureSocket: config.secureSocket,
-            proxy: config.proxy,
-            validation: config.validation
-        };
+        http:ClientConfiguration httpClientConfig = check config:constructHTTPClientConfig(config);
         self.awsDynamoDb = check new(endpoint, httpClientConfig);
     }
 
