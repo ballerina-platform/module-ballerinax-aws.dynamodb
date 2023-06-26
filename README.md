@@ -1,6 +1,7 @@
 # Ballerina Amazon DynamoDB Connector 
 [![Build Status](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb/workflows/CI/badge.svg)](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb/actions?query=workflow%3ACI)
 [![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/module-ballerinax-aws.dynamodb.svg)](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb./commits/master)
+[![GraalVM Check](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb/actions/workflows/build-with-bal-test-native.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb/actions/workflows/build-with-bal-test-native.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 [Amazon DynamoDB](https://aws.amazon.com/dynamodb/) is a fully managed, serverless, key-value NoSQL database designed to run high-performance applications at any scale. DynamoDB offers built-in security, continuous backups, automated multi-region replication, in-memory caching, and data export tools.
