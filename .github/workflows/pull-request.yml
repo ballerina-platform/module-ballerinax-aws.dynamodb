@@ -18,15 +18,6 @@ jobs:
               uses: ballerina-platform/ballerina-action/@nightly
               with:
                   args:
-                      test
-              env:
-                  ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY_ID }}
-                  SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
-                  REGION: ${{ secrets.REGION }}
-            - name: Ballerina Test
-              uses: ballerina-platform/ballerina-action/@nightly
-              with:
-                  args:
                       test --test-report --code-coverage --coverage-format=xml
               env:
                   CLIENT_ID: ${{ secrets.CLIENT_ID }}
