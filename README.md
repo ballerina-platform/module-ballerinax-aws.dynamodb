@@ -25,11 +25,11 @@ For more information, go to the module(s).
 Execute the commands below to build from the source:
 * To build the package:
    ```   
-   bal pack
+   bal build ./ballerina
    ```
 * To run tests after build:
    ```
-   bal test
+   bal test ./ballerina
    ```
 ## Contributing to Ballerina
  
