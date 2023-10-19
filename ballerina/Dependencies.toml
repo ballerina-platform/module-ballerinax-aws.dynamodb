@@ -5,7 +5,7 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.8.0"
+distribution-version = "2201.8.0-20230830-220400-8a7556d8"
 
 [[package]]
 org = "ballerina"
@@ -330,9 +330,21 @@ modules = [
 ]
 
 [[package]]
+org = "ballerinai"
+name = "observe"
+version = "0.0.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "observe"}
+]
+modules = [
+	{org = "ballerinai", packageName = "observe", moduleName = "observe"}
+]
+
+[[package]]
 org = "ballerinax"
 name = "aws.dynamodb"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "http"},
@@ -346,6 +358,7 @@ dependencies = [
 	{org = "ballerina", name = "test"},
 	{org = "ballerina", name = "time"},
 	{org = "ballerina", name = "url"},
+	{org = "ballerinai", name = "observe"},
 	{org = "ballerinax", name = "client.config"}
 ]
 modules = [
