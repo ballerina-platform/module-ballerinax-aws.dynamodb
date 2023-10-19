@@ -1,10 +1,13 @@
 [package]
-distribution = "2201.3.0"
+distribution = "2201.8.0"
 org = "ballerinax"
 name = "aws.dynamodb"
-icon = "icon.png"
-license= ["Apache-2.0"]
+version = "2.0.1"
 authors = ["Ballerina"]
-version= "2.0.0"
-keywords = ["IT Operations/Databases", "Cost/Freemium", "Vendor/Amazon"]
 repository = "https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb"
+keywords = ["Communication/Email", "Cost/Free", "Vendor/Google"]
+icon = "icon.png"
+license = ["Apache-2.0"]
+
+[build-options]
+observabilityIncluded = true
