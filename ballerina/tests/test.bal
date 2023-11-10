@@ -14,10 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/test;
-import ballerina/log;
 import ballerina/lang.runtime;
+import ballerina/log;
 import ballerina/os;
+import ballerina/test;
 
 configurable string accessKeyId = os:getEnv("ACCESS_KEY_ID");
 configurable string secretAccessKey = os:getEnv("SECRET_ACCESS_KEY");
@@ -27,108 +27,108 @@ final string mainTable = "Thread";
 final string secondaryTable = "SecondaryThread";
 
 ConnectionConfig config = {
-    awsCredentials: {accessKeyId: accessKeyId, secretAccessKey: secretAccessKey},
-    region: region
+    awsCredentials: {accessKeyId: "AKIATXKV5YLT6S7YXAVG", secretAccessKey: "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"},
+    region: "ap-south-1"
 };
 
 Client dynamoDBClient = check new (config);
 
 @test:Config {}
-function testCreateTable() returns error?{
-    TableCreateRequest payload = {
-        AttributeDefinitions: [
+function testCreateTable() returns error? {
+    CreateTableInput payload = {
+        attributeDefinitions: [
             {
-                AttributeName: "ForumName",
-                AttributeType: "S"
+                attributeName: "ForumName",
+                attributeType: "S"
             },
             {
-                AttributeName: "Subject",
-                AttributeType: "S"
+                attributeName: "Subject",
+                attributeType: "S"
             },
             {
-                AttributeName: "LastPostDateTime",
-                AttributeType: "S"
+                attributeName: "LastPostDateTime",
+                attributeType: "S"
             }
         ],
-        TableName: mainTable,
-        KeySchema: [
+        tableName: mainTable,
+        keySchema: [
             {
-                AttributeName: "ForumName",
-                KeyType: HASH
+                attributeName: "ForumName",
+                keyType: HASH
             },
             {
-                AttributeName: "Subject",
-                KeyType: RANGE
+                attributeName: "Subject",
+                keyType: RANGE
             }
         ],
-        LocalSecondaryIndexes: [
+        localSecondaryIndexes: [
             {
-                IndexName: "LastPostIndex",
-                KeySchema: [
+                indexName: "LastPostIndex",
+                keySchema: [
                     {
-                        AttributeName: "ForumName",
-                        KeyType: HASH
+                        attributeName: "ForumName",
+                        keyType: HASH
                     },
                     {
-                        AttributeName: "LastPostDateTime",
-                        KeyType: RANGE
+                        attributeName: "LastPostDateTime",
+                        keyType: RANGE
                     }
                 ],
-                Projection: {
-                    ProjectionType: KEYS_ONLY
+                projection: {
+                    projectionType: KEYS_ONLY
                 }
             }
         ],
-        ProvisionedThroughput: {
-            ReadCapacityUnits: 5,
-            WriteCapacityUnits: 5
+        provisionedThroughput: {
+            readCapacityUnits: 5,
+            writeCapacityUnits: 5
         },
-        Tags: [
+        tags: [
             {
-                Key: "Owner",
-                Value: "BlueTeam"
+                key: "Owner",
+                value: "BlueTeam"
             }
         ]
     };
-    TableCreateResponse createTablesResult = check dynamoDBClient->createTable(payload);
-    test:assertEquals(createTablesResult.TableDescription?.TableName, mainTable, "Thread table is not created.");
-    test:assertEquals(createTablesResult.TableDescription?.TableStatus, CREATING, "Table is not created.");
-    payload.TableName = secondaryTable;
+    TableDescription createTablesResult = check dynamoDBClient->createTable(payload);
+    test:assertEquals(createTablesResult?.tableName, mainTable, "Thread table is not created.");
+    test:assertEquals(createTablesResult?.tableStatus, CREATING, "Table is not created.");
+    payload.tableName = secondaryTable;
     createTablesResult = check dynamoDBClient->createTable(payload);
-    test:assertEquals(createTablesResult.TableDescription?.TableName, secondaryTable,
-                      "SecondaryThread table is not created.");
+    test:assertEquals(createTablesResult?.tableName, secondaryTable,
+                    "SecondaryThread table is not created.");
     log:printInfo("Testing CreateTable is completed.");
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testCreateTable]
 }
-function testDescribeTable() returns error?{
-    TableDescribeResponse response = check dynamoDBClient->describeTable(mainTable);
-    test:assertEquals(response.Table?.TableName, mainTable, "Expected table is not described.");
+function testDescribeTable() returns error? {
+    TableDescription response = check dynamoDBClient->describeTable(mainTable);
+    test:assertEquals(response?.tableName, mainTable, "Expected table is not described.");
     log:printInfo("Testing DescribeTable is completed.");
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testDescribeTable]
 }
-function updateTable() returns error?{
+function updateTable() returns error? {
     _ = check executeWithRetry(testUpdateTable, 20, 3);
 }
 
 function testUpdateTable() returns error? {
-    TableUpdateRequest request = {
-        TableName: mainTable,
-        ProvisionedThroughput: {
-            ReadCapacityUnits: 10,
-            WriteCapacityUnits: 10
+    UpdateTableInput request = {
+        tableName: mainTable,
+        provisionedThroughput: {
+            readCapacityUnits: 10,
+            writeCapacityUnits: 10
         }
     };
-    TableUpdateResponse response = check dynamoDBClient->updateTable(request);
-    ProvisionedThroughputDescription? provisionedThroughput = response.TableDescription?.ProvisionedThroughput;
+    TableDescription response = check dynamoDBClient->updateTable(request);
+    ProvisionedThroughputDescription? provisionedThroughput = response?.provisionedThroughput;
     if provisionedThroughput !is () {
-        test:assertEquals(provisionedThroughput?.ReadCapacityUnits, 5, "Read Capacity Units are not updated in table.");
-        test:assertEquals(provisionedThroughput?.WriteCapacityUnits, 5, "Write Capacity Units are not updated in table.");
+        test:assertEquals(provisionedThroughput?.readCapacityUnits, 5, "Read Capacity Units are not updated in table.");
+        test:assertEquals(provisionedThroughput?.writeCapacityUnits, 5, "Write Capacity Units are not updated in table.");
     }
     log:printInfo("Testing UpdateTable is completed.");
 }
@@ -136,23 +136,23 @@ function testUpdateTable() returns error? {
 @test:Config {
     dependsOn: [updateTable]
 }
-function testListTables() returns error?{
+function testListTables() returns error? {
     stream<string, error?> response = check dynamoDBClient->listTables();
-    test:assertTrue(response.next() is record {| string value; |}, "Expected result is not obtained.");
-    check response.forEach(function (string tableName){
+    test:assertTrue(response.next() is record {|string value;|}, "Expected result is not obtained.");
+    check response.forEach(function(string tableName) {
         log:printInfo(tableName);
     });
     log:printInfo("Testing ListTables is completed.");
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testListTables]
 }
 function testPutItem() returns error? {
-    ItemCreateRequest request = {
-        TableName: mainTable,
-        Item: {
-            "LastPostDateTime" : {
+    PutItemInput request = {
+        tableName: mainTable,
+        item: {
+            "LastPostDateTime": {
                 "S": "201303190422"
             },
             "Tags": {
@@ -175,11 +175,11 @@ function testPutItem() returns error? {
                 "S": "fred@example.com"
             }
         },
-        ConditionExpression: "ForumName <> :f and Subject <> :s",
-        ReturnValues: ALL_OLD,
-        ReturnItemCollectionMetrics: SIZE,
-        ReturnConsumedCapacity: TOTAL,
-        ExpressionAttributeValues: {
+        conditionExpression: "ForumName <> :f and Subject <> :s",
+        returnValues: ALL_OLD,
+        returnItemCollectionMetrics: SIZE,
+        returnConsumedCapacity: TOTAL,
+        expressionAttributeValues: {
             ":f": {
                 "S": "Amazon DynamoDB"
             },
@@ -189,41 +189,18 @@ function testPutItem() returns error? {
         }
     };
 
-    ItemDescription response = check dynamoDBClient->putItem(request);
+    ItemDescription response = check dynamoDBClient->createItem(request);
     log:printInfo(response.toString());
     log:printInfo("Testing CreateItem is completed.");
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testPutItem]
 }
 function testGetItem() returns error? {
-    ItemGetRequest request = {
-        TableName: mainTable,
-        Key: {
-            "ForumName": {
-            "S": "Amazon DynamoDB"
-            },
-            "Subject": {
-            "S": "How do I update multiple items?"
-            }
-        },
-        ProjectionExpression: "LastPostDateTime, Message, Tags",
-        ConsistentRead: true,
-        ReturnConsumedCapacity: TOTAL
-    };
-    ItemGetResponse response = check dynamoDBClient->getItem(request);
-    log:printInfo(response?.Item.toString());
-    log:printInfo("Testing GetItem is completed.");
-}
-
-@test:Config{
-    dependsOn: [testGetItem]
-}
-function testUpdateItem() returns error? {
-    ItemUpdateRequest request = {
-        TableName: mainTable,
-        Key: {
+    GetItemInput request = {
+        tableName: mainTable,
+        'key: {
             "ForumName": {
                 "S": "Amazon DynamoDB"
             },
@@ -231,9 +208,32 @@ function testUpdateItem() returns error? {
                 "S": "How do I update multiple items?"
             }
         },
-        UpdateExpression: "set LastPostedBy = :val1",
-        ConditionExpression: "LastPostedBy = :val2",
-        ExpressionAttributeValues: {
+        projectionExpression: "LastPostDateTime, Message, Tags",
+        consistentRead: true,
+        returnConsumedCapacity: TOTAL
+    };
+    GetItemOutput response = check dynamoDBClient->getItem(request);
+    log:printInfo(response?.item.toString());
+    log:printInfo("Testing GetItem is completed.");
+}
+
+@test:Config {
+    dependsOn: [testGetItem]
+}
+function testUpdateItem() returns error? {
+    UpdateItemInput request = {
+        tableName: mainTable,
+        'key: {
+            "ForumName": {
+                "S": "Amazon DynamoDB"
+            },
+            "Subject": {
+                "S": "How do I update multiple items?"
+            }
+        },
+        updateExpression: "set LastPostedBy = :val1",
+        conditionExpression: "LastPostedBy = :val2",
+        expressionAttributeValues: {
             ":val1": {
                 "S": "alice@example.com"
             },
@@ -241,217 +241,221 @@ function testUpdateItem() returns error? {
                 "S": "fred@example.com"
             }
         },
-        ReturnValues: ALL_NEW,
-        ReturnConsumedCapacity: TOTAL,
-        ReturnItemCollectionMetrics: SIZE
+        returnValues: ALL_NEW,
+        returnConsumedCapacity: TOTAL,
+        returnItemCollectionMetrics: SIZE
     };
     ItemDescription response = check dynamoDBClient->updateItem(request);
     log:printInfo(response.toString());
     log:printInfo("Testing UpdateItem is completed.");
 }
 
-@test:Config{
+@test:Config {
     dependsOn: [testUpdateItem]
 }
 function testQuery() returns error? {
-    QueryRequest request = {
-        TableName: mainTable,
-        ConsistentRead: true,
-        KeyConditionExpression: "ForumName = :val",
-        ExpressionAttributeValues: {":val": {"S": "Amazon DynamoDB"}}
+    QueryInput request = {
+        tableName: mainTable,
+        consistentRead: true,
+        keyConditionExpression: "ForumName = :val",
+        expressionAttributeValues: {":val": {"S": "Amazon DynamoDB"}}
     };
-    stream<QueryResponse, error?> response = check dynamoDBClient->query(request);
-    check response.forEach(function(QueryResponse resp){
-        test:assertTrue(resp?.Item is map<AttributeValue>);
+    stream<QueryOutput, error?> response = check dynamoDBClient->query(request);
+    check response.forEach(function(QueryOutput resp) {
+        test:assertTrue(resp?.item is map<AttributeValue>);
     });
     log:printInfo("Testing Query is completed.");
 }
-@test:Config{
+
+@test:Config {
     dependsOn: [testQuery]
 }
 function testScan() returns error? {
-    ScanRequest request = {
-        TableName: mainTable,
-        FilterExpression: "LastPostedBy = :val",
-        ExpressionAttributeValues: {":val": {"S": "alice@example.com"}},
-        ReturnConsumedCapacity: TOTAL
+    ScanInput request = {
+        tableName: mainTable,
+        filterExpression: "LastPostedBy = :val",
+        expressionAttributeValues: {":val": {"S": "alice@example.com"}},
+        returnConsumedCapacity: TOTAL
     };
 
-    stream<ScanResponse, error?> response = check dynamoDBClient->scan(request);
-    check response.forEach(function(ScanResponse resp){
-        test:assertTrue(resp?.Item is map<AttributeValue>);
+    stream<ScanOutput, error?> response = check dynamoDBClient->scan(request);
+    check response.forEach(function(ScanOutput resp) {
+        test:assertTrue(resp?.item is map<AttributeValue>);
     });
     log:printInfo("Testing Scan is completed.");
 }
-@test:Config{
+
+@test:Config {
     dependsOn: [testScan]
 }
 function testWriteBatchItems() returns error? {
-    ItemsBatchWriteRequest request = {
-        RequestItems: {
-            "SecondaryThread" :[
+    BatchWriteItemInput request = {
+        requestItems: {
+            "SecondaryThread": [
                 {
-                    PutRequest: {
-                        Item: {
+                    putRequest: {
+                        item: {
                             "LastPostDateTime": {
                                 "S": "201303190423"
                             },
                             "Tags": {
                                 "SS": [
-                                        "Update",
-                                        "Multiple Items",
-                                        "HelpMe"
-                                    ]
-                                },
+                                    "Update",
+                                    "Multiple Items",
+                                    "HelpMe"
+                                ]
+                            },
                             "ForumName": {
-                                    "S": "Amazon S3"
-                                },
+                                "S": "Amazon S3"
+                            },
                             "Message": {
-                                    "S": "I want to update multiple items in a single call. What's the best way to do that?"
-                                },
+                                "S": "I want to update multiple items in a single call. What's the best way to do that?"
+                            },
                             "Subject": {
-                                    "S": "How do I update multiple items?"
-                                },
+                                "S": "How do I update multiple items?"
+                            },
                             "LastPostedBy": {
-                                    "S": "john@example.com"
-                                }
+                                "S": "john@example.com"
                             }
                         }
-                    },
-                {
-                    PutRequest: {
-                        Item: {
-                            "LastPostDateTime": {
-                                "S": "201303190423"
-                            },
-                            "Tags": {
-                                "SS": [
-                                        "Update",
-                                        "Multiple Items",
-                                        "HelpMe"
-                                    ]
-                                },
-                            "ForumName": {
-                                    "S": "Amazon DynamoDB"
-                                },
-                            "Message": {
-                                    "S": "I want to update multiple items in a single call. What's the best way to do that?"
-                                },
-                            "Subject": {
-                                    "S": "How do I update multiple items?"
-                                },
-                            "LastPostedBy": {
-                                    "S": "fred@example.com"
-                                }
-                            }
-                        }
-                    },
-                {
-                    PutRequest: {
-                        Item: {
-                            "LastPostDateTime": {
-                                "S": "201303190423"
-                            },
-                            "Tags": {
-                                "SS": [
-                                        "Update",
-                                        "Multiple Items",
-                                        "HelpMe"
-                                    ]
-                                },
-                            "ForumName": {
-                                    "S": "Amazon SimpleDB"
-                                },
-                            "Message": {
-                                    "S": "I want to update multiple items in a single call. What's the best way to do that?"
-                                },
-                            "Subject": {
-                                    "S": "How do I update multiple items?"
-                                },
-                            "LastPostedBy": {
-                                    "S": "james@example.com"
-                                }
-                            }
-                        }
-                    },
-                {
-                    PutRequest: {
-                        Item: {
-                            "LastPostDateTime": {
-                                "S": "201303190423"
-                            },
-                            "Tags": {
-                                "SS": [
-                                        "Update",
-                                        "Multiple Items",
-                                        "HelpMe"
-                                    ]
-                                },
-                            "ForumName": {
-                                    "S": "Amazon SES"
-                                },
-                            "Message": {
-                                    "S": "I want to send an email using AWS SES. What's the best way to do that?"
-                                },
-                            "Subject": {
-                                    "S": "How do I send a mail?"
-                                },
-                            "LastPostedBy": {
-                                    "S": "anne@example.com"
-                                }
-                            }
-                        }                                                                     
                     }
+                },
+                {
+                    putRequest: {
+                        item: {
+                            "LastPostDateTime": {
+                                "S": "201303190423"
+                            },
+                            "Tags": {
+                                "SS": [
+                                    "Update",
+                                    "Multiple Items",
+                                    "HelpMe"
+                                ]
+                            },
+                            "ForumName": {
+                                "S": "Amazon DynamoDB"
+                            },
+                            "Message": {
+                                "S": "I want to update multiple items in a single call. What's the best way to do that?"
+                            },
+                            "Subject": {
+                                "S": "How do I update multiple items?"
+                            },
+                            "LastPostedBy": {
+                                "S": "fred@example.com"
+                            }
+                        }
+                    }
+                },
+                {
+                    putRequest: {
+                        item: {
+                            "LastPostDateTime": {
+                                "S": "201303190423"
+                            },
+                            "Tags": {
+                                "SS": [
+                                    "Update",
+                                    "Multiple Items",
+                                    "HelpMe"
+                                ]
+                            },
+                            "ForumName": {
+                                "S": "Amazon SimpleDB"
+                            },
+                            "Message": {
+                                "S": "I want to update multiple items in a single call. What's the best way to do that?"
+                            },
+                            "Subject": {
+                                "S": "How do I update multiple items?"
+                            },
+                            "LastPostedBy": {
+                                "S": "james@example.com"
+                            }
+                        }
+                    }
+                },
+                {
+                    putRequest: {
+                        item: {
+                            "LastPostDateTime": {
+                                "S": "201303190423"
+                            },
+                            "Tags": {
+                                "SS": [
+                                    "Update",
+                                    "Multiple Items",
+                                    "HelpMe"
+                                ]
+                            },
+                            "ForumName": {
+                                "S": "Amazon SES"
+                            },
+                            "Message": {
+                                "S": "I want to send an email using AWS SES. What's the best way to do that?"
+                            },
+                            "Subject": {
+                                "S": "How do I send a mail?"
+                            },
+                            "LastPostedBy": {
+                                "S": "anne@example.com"
+                            }
+                        }
+                    }
+                }
             ]
         },
-        ReturnConsumedCapacity: TOTAL
+        returnConsumedCapacity: TOTAL
     };
 
-    ItemsBatchWriteResponse response = check dynamoDBClient->writeBatchItems(request);
+    BatchWriteItemOutput response = check dynamoDBClient->batchWriteItem(request);
     log:printInfo(response.toString());
     log:printInfo("Testing WriteBatchItems(put) is completed.");
 }
-@test:Config{
+
+@test:Config {
     dependsOn: [testWriteBatchItems]
 }
 function testGetBatchItems() returns error? {
-    ItemsBatchGetRequest request = {
-        RequestItems: {
+    GetBatchItemInput request = {
+        requestItems: {
             "Thread": {
-                Keys: [
+                keys: [
                     {
-                        "ForumName":{"S":"Amazon DynamoDB"},
-                        "Subject":{"S":"How do I update multiple items?"}
+                        "ForumName": {"S": "Amazon DynamoDB"},
+                        "Subject": {"S": "How do I update multiple items?"}
                     }
                 ],
-                ProjectionExpression:"ForumName, Message"
+                projectionExpression: "ForumName, Message"
             },
             "SecondaryThread": {
-                Keys: [
+                keys: [
                     {
-                        "ForumName":{"S":"Amazon S3"},
-                        "Subject":{"S":"How do I update multiple items?"}
+                        "ForumName": {"S": "Amazon S3"},
+                        "Subject": {"S": "How do I update multiple items?"}
                     }
                 ],
-                ProjectionExpression:"ForumName, Message, LastPostedBy"
+                projectionExpression: "ForumName, Message, LastPostedBy"
             }
         },
-        ReturnConsumedCapacity: TOTAL
+        returnConsumedCapacity: TOTAL
     };
 
-    stream<ItemByBatchGet, error?> response = check dynamoDBClient->getBatchItems(request);
-    check response.forEach( function (ItemByBatchGet item) {
-        log:printInfo(item?.Item.toString());
+    stream<BatchItem, error?> response = check dynamoDBClient->getBatchItem(request);
+    check response.forEach(function(BatchItem item) {
+        log:printInfo(item?.item.toString());
     });
     log:printInfo("Testing BatchGetItem is completed.");
 }
-@test:Config{
+
+@test:Config {
     dependsOn: [testGetBatchItems]
 }
 function testDeleteItem() returns error? {
-    ItemDeleteRequest request = {
-        TableName: mainTable,
-        Key: {
+    DeleteItemInput request = {
+        tableName: mainTable,
+        'key: {
             "ForumName": {
                 "S": "Amazon DynamoDB"
             },
@@ -459,27 +463,27 @@ function testDeleteItem() returns error? {
                 "S": "How do I update multiple items?"
             }
         },
-        ReturnConsumedCapacity: TOTAL,
-        ReturnItemCollectionMetrics: SIZE,
-        ReturnValues: ALL_OLD
+        returnConsumedCapacity: TOTAL,
+        returnItemCollectionMetrics: SIZE,
+        returnValues: ALL_OLD
     };
     ItemDescription response = check dynamoDBClient->deleteItem(request);
     log:printInfo(response.toString());
     log:printInfo("Testing DeleteItem is completed.");
 }
 
-@test:Config{}
+@test:Config {}
 function testDescribeLimits() returns error? {
-    LimitDescribtion response = check dynamoDBClient->describeLimits();
-    test:assertTrue(response?.AccountMaxReadCapacityUnits is int, "AccountMaxReadCapacityUnits in DescribeLimits is " +
+    LimitDescription response = check dynamoDBClient->describeLimits();
+    test:assertTrue(response?.accountMaxReadCapacityUnits is int, "AccountMaxReadCapacityUnits in DescribeLimits is " +
                     "not an integer.");
-    test:assertTrue(response?.AccountMaxWriteCapacityUnits is int, "AccountMaxWriteCapacityUnits in DescribeLimits is " +
+    test:assertTrue(response?.accountMaxWriteCapacityUnits is int, "AccountMaxWriteCapacityUnits in DescribeLimits is " +
                     "not an integer.");
-    test:assertTrue(response?.TableMaxReadCapacityUnits is int, "TableMaxReadCapacityUnits in DescribeLimits is " +
+    test:assertTrue(response?.tableMaxReadCapacityUnits is int, "TableMaxReadCapacityUnits in DescribeLimits is " +
                     "not an integer.");
-    test:assertTrue(response?.TableMaxWriteCapacityUnits is int, "TableMaxWriteCapacityUnits in DescribeLimits is " +
+    test:assertTrue(response?.tableMaxWriteCapacityUnits is int, "TableMaxWriteCapacityUnits in DescribeLimits is " +
                     "not an integer.");
-    log:printInfo("Testing DescribeLimits is completed.");                                               
+    log:printInfo("Testing DescribeLimits is completed.");
 }
 
 @test:AfterSuite
@@ -488,43 +492,43 @@ function deleteTables() returns error? {
 }
 
 function testDeleteTable() returns error? {
-    TableDeleteResponse response = check dynamoDBClient->deleteTable(mainTable);
+    TableDescription response = check dynamoDBClient->deleteTable(mainTable);
     log:printInfo(response.toString());
-    test:assertEquals(response.TableDescription?.TableName, mainTable, "Expected table is not deleted.");
+    test:assertEquals(response?.tableName, mainTable, "Expected table is not deleted.");
     response = check dynamoDBClient->deleteTable(secondaryTable);
     log:printInfo(response.toString());
-    test:assertEquals(response.TableDescription?.TableName, secondaryTable, "Expected table is not deleted.");
+    test:assertEquals(response?.tableName, secondaryTable, "Expected table is not deleted.");
     log:printInfo("Testing DeleteTable is completed.");
 }
 
 # Executes a given function with retry. If there is no error the function will 
 # immediately return. If there's errors it will retry as per given parameters. 
-# 
+#
 # + testFunc - Test function to execute
 # + delayBetweenRetries - Time delay between two retries in seconds
 # + maxRetryCount - Maximum count to retry before giving up
 # + errorMsg - (Optional) Part or exact error message to check. Retry will happen 
-#               only if this matches with the error that is returned by executing the  testFunc. 
-#               If not provided, retry will happen for any error returned by the testFunc. 
+# only if this matches with the error that is returned by executing the  testFunc. 
+# If not provided, retry will happen for any error returned by the testFunc. 
 # + return - Stream of Calendars on success or else an error
 function executeWithRetry(function () returns error? testFunc, decimal delayBetweenRetries,
-      int maxRetryCount, string? errorMsg = ()) returns error? {
-    
+        int maxRetryCount, string? errorMsg = ()) returns error? {
+
     int currentRetryCount = 0;
     error? testResult = ();
     while (currentRetryCount < maxRetryCount) {
-        if(currentRetryCount > 0) {
-            runtime:sleep (delayBetweenRetries);
-            log:printWarn("Function returned an error. Retrying for " 
+        if (currentRetryCount > 0) {
+            runtime:sleep(delayBetweenRetries);
+            log:printWarn("Function returned an error. Retrying for "
                 + (currentRetryCount + 1).toString() + "th time");
         }
         testResult = testFunc();
-        currentRetryCount = currentRetryCount +1;
+        currentRetryCount = currentRetryCount + 1;
         if testResult is error {
-            if(errorMsg == ()) {
+            if (errorMsg == ()) {
                 continue;
             } else {
-                if(string:includes(testResult.message(), errorMsg, 0)) {
+                if (string:includes(testResult.message(), errorMsg, 0)) {
                     continue;
                 } else {
                     break;
@@ -535,4 +539,27 @@ function executeWithRetry(function () returns error? testFunc, decimal delayBetw
         }
     }
     return testResult;
+}
+
+@test:Config {
+    dependsOn: [testCreateTable]
+}
+function testCreateBackupAndDeleteBackup() returns error? {
+    CreateBackupInput backupRequest = {
+        tableName: "Thread",
+        backupName: "ThreadBackup"
+    };
+    BackupDetails response = check dynamoDBClient->createBackup(backupRequest);
+    test:assertEquals(response.backupName, "ThreadBackup");
+    string backupArn = response.backupArn;
+    BackupDescription backupDescription = check dynamoDBClient->deleteBackup(backupArn);
+    test:assertEquals(backupDescription.backupDetails?.backupName, "ThreadBackup");
+}
+
+@test:Config {
+    dependsOn: [testCreateTable]
+}
+function testTimeToLive() returns error? {
+    TTLDescription response = check dynamoDBClient->getTTL("Thread");
+    test:assertEquals(response.timeToLiveStatus, "DISABLED");
 }

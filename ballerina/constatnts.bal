@@ -54,58 +54,90 @@ const string HEADER_X_AMZ_CONTENT_SHA256 = "X-Amz-Content-Sha256";
 const string HEADER_X_AMZ_DATE = "X-Amz-Date";
 const string HEADER_X_AMZ_TARGET = "X-Amz-Target";
 const string HEADER_HOST = "Host";
-const string HEADER_AUTHORIZATION= "Authorization";
+const string HEADER_AUTHORIZATION = "Authorization";
 
 const string GENERATE_SIGNED_REQUEST_HEADERS_FAILED_MSG = "Error occurred while generating signed request headers.";
 
 public enum AttributeType {
     S, N, B
 }
+
 public enum KeyType {
     HASH, RANGE
 }
+
 public enum ProjectionType {
     ALL, KEYS_ONLY, INCLUDE
 }
+
 public enum SSEType {
     AES256, KMS
 }
+
 public enum StreamViewType {
     NEW_IMAGE, OLD_IMAGE, NEW_AND_OLD_IMAGES, KEYS_ONLY
 }
+
 public enum BillingMode {
     PROVISIONED, PAY_PER_REQUEST
 }
+
 public enum IndexStatus {
     CREATING, UPDATING, DELETING, ACTIVE
 }
+
 public enum ReplicaStatus {
     CREATING, CREATION_FAILED, UPDATING, DELETING, ACTIVE, REGION_DISABLED, INACCESSIBLE_ENCRYPTION_CREDENTIALS
 }
+
 public enum Status {
     ENABLING, ENABLED, DISABLING, DISABLED, UPDATING
 }
+
 public enum TableStatus {
     CREATING, UPDATING, DELETING, ACTIVE, INACCESSIBLE_ENCRYPTION_CREDENTIALS, ARCHIVING, ARCHIVED
 }
+
 public enum ComparisonOperator {
     EQ, NE, IN, LE, LT, GE, GT, BETWEEN, NOT_NULL, NULL, CONTAINS, NOT_CONTAINS, BEGINS_WITH
 }
+
 public enum ConditionalOperator {
-    AND , OR
+    AND, OR
 }
+
 public enum ReturnConsumedCapacity {
     INDEXES, TOTAL, NONE
 }
+
 public enum ReturnItemCollectionMetrics {
-    SIZE ,NONE
+    SIZE, NONE
 }
+
 public enum ReturnValues {
-    NONE , ALL_OLD , UPDATED_OLD , ALL_NEW, UPDATED_NEW
+    NONE, ALL_OLD, UPDATED_OLD, ALL_NEW, UPDATED_NEW
 }
+
 public enum Action {
     ADD, PUT, DELETE
 }
+
 public enum Select {
     ALL_ATTRIBUTES, ALL_PROJECTED_ATTRIBUTES, SPECIFIC_ATTRIBUTES, COUNT
+}
+
+public enum StreamStatus {
+    ENABLING, ENABLED, DISABLING, DISABLED
+}
+
+public enum eventName {
+    INSERT, MODIFY, REMOVE
+}
+
+public enum ShardIteratorType {
+    TRIM_HORIZON, LATEST, AT_SEQUENCE_NUMBER, AFTER_SEQUENCE_NUMBER
+}
+
+public enum TimeToLiveStatus {
+    ENABLING, DISABLING, ENABLED, DISABLED
 }

@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import ballerina/http;
 
 class TableStream {
@@ -22,15 +21,13 @@ class TableStream {
     private final http:Client httpClient;
     private final string accessKeyId;
     private final string secretAccessKey;
-    // private final string? securityToken;
     private final string region;
     private final string awsHost;
     private final string uri = SLASH;
     private string? exclusiveStartTableName;
 
-
     isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region)
-                           returns error? {
+                            returns error? {
         self.httpClient = httpClient;
         self.accessKeyId = accessKey;
         self.secretAccessKey = secretKey;
@@ -40,16 +37,16 @@ class TableStream {
         self.currentEntries = check self.fetchTableNames();
     }
 
-    public isolated function next() returns record {| string value; |}|error? {
+    public isolated function next() returns record {|string value;|}|error? {
         if (self.index < self.currentEntries.length()) {
-            record {| string value; |} tableName = {value: self.currentEntries[self.index]};
+            record {|string value;|} tableName = {value: self.currentEntries[self.index]};
             self.index += 1;
             return tableName;
         }
         if (self.exclusiveStartTableName is string) {
             self.index = 0;
             self.currentEntries = check self.fetchTableNames();
-            record {| string value; |} tableName = {value: self.currentEntries[self.index]};
+            record {|string value;|} tableName = {value: self.currentEntries[self.index]};
             self.index += 1;
             return tableName;
         }
@@ -58,15 +55,18 @@ class TableStream {
     isolated function fetchTableNames() returns string[]|error {
         string target = VERSION + DOT + "ListTables";
         TableListRequest request = {
-            ExclusiveStartTableName: self.exclusiveStartTableName
+            exclusiveStartTableName: self.exclusiveStartTableName
         };
         json payload = check request.cloneWithType(json);
+        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
-                                                                         self.secretAccessKey, self.region,
-                                                                         POST, self.uri, target, payload);
-        TableList response = check self.httpClient->post(self.uri,payload, signedRequestHeaders);
-        self.exclusiveStartTableName = response?.LastEvaluatedTableName;
-        string[]? tableList = response?.TableNames;
+                                                                        self.secretAccessKey, self.region,
+                                                                        POST, self.uri, target, payload);
+        json response = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
+        convertJsonKeysToCamelCase(response);
+        TableList tableListResp = check response.cloneWithType(TableList);
+        self.exclusiveStartTableName = tableListResp?.lastEvaluatedTableName;
+        string[]? tableList = tableListResp?.tableNames;
         if tableList is string[] {
             return tableList;
         }
@@ -75,20 +75,18 @@ class TableStream {
 }
 
 class ScanStream {
-    private ScanResponse[] currentEntries = [];
+    private ScanOutput[] currentEntries = [];
     private int index = 0;
     private final http:Client httpClient;
     private final string accessKeyId;
     private final string secretAccessKey;
-    // private final string? securityToken;
     private final string region;
     private final string awsHost;
     private final string uri = SLASH;
-    private ScanRequest scanRequest;
-
+    private ScanInput scanRequest;
 
     isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region,
-                           ScanRequest scanRequest) returns error? {
+            ScanInput scanRequest) returns error? {
         self.httpClient = httpClient;
         self.accessKeyId = accessKey;
         self.secretAccessKey = secretKey;
@@ -98,38 +96,41 @@ class ScanStream {
         self.currentEntries = check self.fetchScan();
     }
 
-    public isolated function next() returns record {| ScanResponse value; |}|error? {
+    public isolated function next() returns record {|ScanOutput value;|}|error? {
         if (self.index < self.currentEntries.length()) {
-            record {| ScanResponse value; |} response = {value: self.currentEntries[self.index]};
+            record {|ScanOutput value;|} response = {value: self.currentEntries[self.index]};
             self.index += 1;
             return response;
         }
-        if (self.scanRequest?.ExclusiveStartKey is map<AttributeValue>) {
+        if (self.scanRequest?.exclusiveStartKey is map<AttributeValue>) {
             self.index = 0;
             self.currentEntries = check self.fetchScan();
             if (self.index < self.currentEntries.length()) {
-                record {| ScanResponse value; |} response = {value: self.currentEntries[self.index]};
+                record {|ScanOutput value;|} response = {value: self.currentEntries[self.index]};
                 self.index += 1;
                 return response;
             }
         }
     }
 
-    isolated function fetchScan() returns ScanResponse[]|error {
+    isolated function fetchScan() returns ScanOutput[]|error {
         string target = VERSION + DOT + "Scan";
         json payload = check self.scanRequest.cloneWithType(json);
+        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
-                                                                         self.secretAccessKey, self.region,
-                                                                         POST, self.uri, target, payload);
-        QueryOrScanResponse response = check self.httpClient->post(self.uri,payload, signedRequestHeaders);
-        self.scanRequest.ExclusiveStartKey = response?.LastEvaluatedKey;
-        map<AttributeValue>[]?? items = response?.Items;
+                                                                        self.secretAccessKey, self.region,
+                                                                        POST, self.uri, target, payload);
+        json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
+        convertJsonKeysToCamelCase(jsonResponse);
+        QueryOrScanResponse response = check jsonResponse.cloneWithType(QueryOrScanResponse);
+        self.scanRequest.exclusiveStartKey = response?.lastEvaluatedKey;
+        map<AttributeValue>[]?? items = response?.items;
         if items is map<AttributeValue>[] {
-            ScanResponse[] scanResponseArr = [];
+            ScanOutput[] scanResponseArr = [];
             foreach map<AttributeValue> item in items {
-                ScanResponse scanResponse = {
-                    ConsumedCapacity: response?.ConsumedCapacity,
-                    Item: item
+                ScanOutput scanResponse = {
+                    consumedCapacity: response?.consumedCapacity,
+                    item: item
                 };
                 scanResponseArr.push(scanResponse);
             }
@@ -141,20 +142,18 @@ class ScanStream {
 }
 
 class QueryStream {
-    private QueryResponse[] currentEntries = [];
+    private QueryOutput[] currentEntries = [];
     private int index = 0;
     private final http:Client httpClient;
     private final string accessKeyId;
     private final string secretAccessKey;
-    // private final string? securityToken;
     private final string region;
     private final string awsHost;
     private final string uri = SLASH;
-    private QueryRequest queryRequest;
-
+    private QueryInput queryRequest;
 
     isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region,
-                           QueryRequest queryRequest) returns error? {
+            QueryInput queryRequest) returns error? {
         self.httpClient = httpClient;
         self.accessKeyId = accessKey;
         self.secretAccessKey = secretKey;
@@ -164,38 +163,41 @@ class QueryStream {
         self.currentEntries = check self.fetchQuery();
     }
 
-    public isolated function next() returns record {| QueryResponse value; |}|error? {
+    public isolated function next() returns record {|QueryOutput value;|}|error? {
         if (self.index < self.currentEntries.length()) {
-            record {| QueryResponse value; |} response = {value: self.currentEntries[self.index]};
+            record {|QueryOutput value;|} response = {value: self.currentEntries[self.index]};
             self.index += 1;
             return response;
         }
-        if (self.queryRequest?.ExclusiveStartKey is map<AttributeValue>) {
+        if (self.queryRequest?.exclusiveStartKey is map<AttributeValue>) {
             self.index = 0;
             self.currentEntries = check self.fetchQuery();
             if (self.index < self.currentEntries.length()) {
-                record {| QueryResponse value; |} response = {value: self.currentEntries[self.index]};
+                record {|QueryOutput value;|} response = {value: self.currentEntries[self.index]};
                 self.index += 1;
                 return response;
             }
         }
     }
 
-    isolated function fetchQuery() returns QueryResponse[]|error {
+    isolated function fetchQuery() returns QueryOutput[]|error {
         string target = VERSION + DOT + "Query";
         json payload = check self.queryRequest.cloneWithType(json);
+        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
-                                                                         self.secretAccessKey, self.region,
-                                                                         POST, self.uri, target, payload);
-        QueryOrScanResponse response = check self.httpClient->post(self.uri,payload, signedRequestHeaders);
-        self.queryRequest.ExclusiveStartKey = response?.LastEvaluatedKey;
-        map<AttributeValue>[]?? items = response?.Items;
+                                                                        self.secretAccessKey, self.region,
+                                                                        POST, self.uri, target, payload);
+        json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
+        convertJsonKeysToCamelCase(jsonResponse);
+        QueryOrScanResponse response = check jsonResponse.cloneWithType(QueryOrScanResponse);
+        self.queryRequest.exclusiveStartKey = response?.lastEvaluatedKey;
+        map<AttributeValue>[]? items = response?.items;
         if items is map<AttributeValue>[] {
-            QueryResponse[] queryResponseArr = [];
+            QueryOutput[] queryResponseArr = [];
             foreach map<AttributeValue> item in items {
-                QueryResponse queryResponse = {
-                    ConsumedCapacity: response?.ConsumedCapacity,
-                    Item: item
+                QueryOutput queryResponse = {
+                    consumedCapacity: response?.consumedCapacity,
+                    item: item
                 };
                 queryResponseArr.push(queryResponse);
             }
@@ -207,20 +209,18 @@ class QueryStream {
 }
 
 class ItemsBatchGetStream {
-    private ItemByBatchGet[] currentEntries = [];
+    private BatchItem[] currentEntries = [];
     private int index = 0;
     private final http:Client httpClient;
     private final string accessKeyId;
     private final string secretAccessKey;
-    // private final string? securityToken;
     private final string region;
     private final string awsHost;
     private final string uri = SLASH;
-    private ItemsBatchGetRequest itemsBatchGetRequest;
-
+    private GetBatchItemInput itemsBatchGetRequest;
 
     isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region,
-                           ItemsBatchGetRequest itemsBatchGetRequest) returns error? {
+            GetBatchItemInput itemsBatchGetRequest) returns error? {
         self.httpClient = httpClient;
         self.accessKeyId = accessKey;
         self.secretAccessKey = secretKey;
@@ -230,52 +230,55 @@ class ItemsBatchGetStream {
         self.currentEntries = check self.fetchBatchItems();
     }
 
-    public isolated function next() returns record {| ItemByBatchGet value; |}|error? {
+    public isolated function next() returns record {|BatchItem value;|}|error? {
         if (self.index < self.currentEntries.length()) {
-            record {| ItemByBatchGet value; |} response = {value: self.currentEntries[self.index]};
+            record {|BatchItem value;|} response = {value: self.currentEntries[self.index]};
             self.index += 1;
             return response;
         }
-        if (self.itemsBatchGetRequest.RequestItems.keys().length()!=0) {
+        if (self.itemsBatchGetRequest.requestItems.keys().length() != 0) {
             self.index = 0;
             self.currentEntries = check self.fetchBatchItems();
             if (self.index < self.currentEntries.length()) {
-                record {| ItemByBatchGet value; |} response = {value: self.currentEntries[self.index]};
+                record {|BatchItem value;|} response = {value: self.currentEntries[self.index]};
                 self.index += 1;
                 return response;
             }
         }
     }
 
-    isolated function fetchBatchItems() returns ItemByBatchGet[]|error {
+    isolated function fetchBatchItems() returns BatchItem[]|error {
         string target = VERSION + DOT + "BatchGetItem";
         json payload = check self.itemsBatchGetRequest.cloneWithType(json);
+        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
-                                                                         self.secretAccessKey, self.region,
-                                                                         POST, self.uri, target, payload);
-        ItemsBatchGetResponse response = check self.httpClient->post(self.uri,payload, signedRequestHeaders);
+                                                                        self.secretAccessKey, self.region,
+                                                                        POST, self.uri, target, payload);
+        json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
+        convertJsonKeysToCamelCase(jsonResponse);
+        ItemsBatchGetResponse response = check jsonResponse.cloneWithType(ItemsBatchGetResponse);
 
-        self.itemsBatchGetRequest.RequestItems =  self.getRequestItemsToNextBatch(response);                                                  
-        map<map<AttributeValue>[]>?? batchResponses = response?.Responses;
-        ConsumedCapacity[]?? consumedCapacities = response?.ConsumedCapacity;
+        self.itemsBatchGetRequest.requestItems = self.getRequestItemsToNextBatch(response);
+        map<map<AttributeValue>[]>?? batchResponses = response?.responses;
+        ConsumedCapacity[]?? consumedCapacities = response?.consumedCapacity;
         map<ConsumedCapacity> consumedCapacityMap = {};
         if consumedCapacities is ConsumedCapacity[] {
             foreach ConsumedCapacity consumedCapacity in consumedCapacities {
-                consumedCapacityMap[consumedCapacity?.TableName.toString()] = consumedCapacity;
+                consumedCapacityMap[consumedCapacity?.tableName.toString()] = consumedCapacity;
             }
-        }  
+        }
         if batchResponses is map<map<AttributeValue>[]> {
-            ItemByBatchGet[] itemResponseArr = [];
+            BatchItem[] itemResponseArr = [];
             string[] keys = batchResponses.keys();
-            foreach string keyName in keys {              
+            foreach string keyName in keys {
                 map<AttributeValue>[] items = batchResponses.get(keyName);
-                ConsumedCapacity? consumedCapacity = consumedCapacityMap.hasKey(keyName) ? 
-                                                    consumedCapacityMap.get(keyName) : ();
+                ConsumedCapacity? consumedCapacity = consumedCapacityMap.hasKey(keyName) ?
+                    consumedCapacityMap.get(keyName) : ();
                 foreach map<AttributeValue> item in items {
-                    ItemByBatchGet itemResponse = {
-                        ConsumedCapacity: consumedCapacity,
-                        TableName: keyName,
-                        Item: item
+                    BatchItem itemResponse = {
+                        consumedCapacity: consumedCapacity,
+                        tableName: keyName,
+                        item: item
                     };
                     itemResponseArr.push(itemResponse);
                 }
@@ -286,10 +289,10 @@ class ItemsBatchGetStream {
         }
     }
     // Get RequestItem to construct request payload for the next batch
-    private isolated function getRequestItemsToNextBatch(ItemsBatchGetResponse itemsBatchGetResponse ) 
-                                                         returns map<KeysAndAttributes> {
-        map<KeysAndAttributes>?? unprocessedKeys = itemsBatchGetResponse?.UnprocessedKeys;
-        return (unprocessedKeys is map<KeysAndAttributes> && unprocessedKeys !== {}) ? 
-                <map<KeysAndAttributes>> unprocessedKeys : {};
+    private isolated function getRequestItemsToNextBatch(ItemsBatchGetResponse itemsBatchGetResponse)
+                                                        returns map<KeysAndAttributes> {
+        map<KeysAndAttributes>?? unprocessedKeys = itemsBatchGetResponse?.unprocessedKeys;
+        return (unprocessedKeys is map<KeysAndAttributes> && unprocessedKeys !== {}) ?
+            <map<KeysAndAttributes>>unprocessedKeys : {};
     }
 }
