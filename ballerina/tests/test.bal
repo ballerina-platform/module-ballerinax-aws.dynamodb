@@ -27,8 +27,8 @@ final string mainTable = "Thread";
 final string secondaryTable = "SecondaryThread";
 
 ConnectionConfig config = {
-    awsCredentials: {accessKeyId: "AKIATXKV5YLT6S7YXAVG", secretAccessKey: "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"},
-    region: "ap-south-1"
+    awsCredentials: {accessKeyId: accessKeyId, secretAccessKey: secretAccessKey},
+    region: region
 };
 
 Client dynamoDBClient = check new (config);
