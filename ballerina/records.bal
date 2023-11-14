@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerinax/'client.config;
 
 # Represents the AWS DynamoDB Connector configurations.
@@ -958,8 +959,6 @@ public type CreateBackupInput record {|
     # Name of the table
     string tableName;
 |};
-
-// record documentation
 
 # Contains the details of the backup created for the table.
 public type BackupDetails record {

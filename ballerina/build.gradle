@@ -66,12 +66,6 @@ ballerina {
     buildOnDockerImage = "nightly"
 }
 
-//ballerina {
-//    packageOrganization = packageOrg
-//    module = packageName
-//    langVersion = ballerinaLangVersion
-//}
-
 task updateTomlFiles {
     doLast {
         def newBallerinaToml = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
@@ -94,7 +88,10 @@ task commitTomlFiles {
 }
 
 clean {
-    delete 'build'
+    def folder = file('build')
+    if( folder.exists() ) {
+        delete 'build'
+    }
 }
 
 publishToMavenLocal.dependsOn build
