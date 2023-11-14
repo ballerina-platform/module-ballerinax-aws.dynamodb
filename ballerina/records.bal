@@ -71,8 +71,8 @@ public type LimitDescription record {
     int? tableMaxWriteCapacityUnits?;
 };
 
-# Represents the response after `BatchWriteItem` operation.
-public type BatchWriteItemOutput record {
+# Represents the response after `WriteBatchItem` operation.
+public type WriteBatchItemOutput record {
     # The capacity units consumed by the entire `BatchWriteItem` operation
     ConsumedCapacity[]? consumedCapacity?;
     # A list of tables that were processed by `BatchWriteItem` and, for each table, information about
@@ -85,7 +85,7 @@ public type BatchWriteItemOutput record {
 };
 
 # Represents the request payload `BatchWriteItem` operation.
-public type BatchWriteItemInput record {|
+public type WriteBatchItemInput record {|
     # A map of one or more table names and, for each table, a list of operations to be performed
     # (DeleteRequest or PutRequest)
     map<WriteRequest[]> requestItems;
@@ -96,7 +96,7 @@ public type BatchWriteItemInput record {|
     ReturnItemCollectionMetrics returnItemCollectionMetrics?;
 |};
 
-# Represents the response after `BatchGetItem` operation.stItems`, so the value can be provided directly to a subsequent `BatchGetItem` operation.
+# Represents the response after `BatchGetItem` operation, so the value can be provided directly to a subsequent `BatchGetItem` operation.
 public type ItemsBatchGetResponse record {
     # The read capacity units consumed by the entire BatchGetItem operation
     ConsumedCapacity[]? consumedCapacity?;
@@ -348,30 +348,30 @@ public type ItemDescription record {
 };
 
 # Represents the request payload to put item.
-public type PutItemInput record {|
+public type CreateItemInput record {|
     # A map of attribute name/value pairs, one for each attribute. Only the primary key attributes are required;
     # you can optionally provide other attribute name-value pairs for the item
     map<AttributeValue> item;
     # The name of the table to contain the item
     string tableName;
     # This is a legacy parameter. Use ConditionExpression instead. Valid Values: AND | OR
-    ConditionalOperator conditionalOperator?;
+    ConditionalOperator? conditionalOperator?;
     # A condition that must be satisﬁed in order for a conditional PutItem operation to succeed
-    string conditionExpression?;
+    string? conditionExpression?;
     # This is a legacy parameter. Use ConditionExpression instead
-    map<ExpectedAttributeValue> expected?;
+    map<ExpectedAttributeValue>? expected?;
     # One or more substitution tokens for attribute names in an expression
-    map<string> expressionAttributeNames?;
+    map<string>? expressionAttributeNames?;
     # One or more values that can be substituted in an expression
-    map<AttributeValue> expressionAttributeValues?;
+    map<AttributeValue>? expressionAttributeValues?;
     # Determines the level of detail about provisioned throughput consumption that is returned in
     # the response. Valid Values: INDEXES | TOTAL | NONE
-    ReturnConsumedCapacity returnConsumedCapacity?;
+    ReturnConsumedCapacity? returnConsumedCapacity?;
     # Determines whether item collection metrics are returned. Valid Values: SIZE | NONE
-    ReturnItemCollectionMetrics returnItemCollectionMetrics?;
+    ReturnItemCollectionMetrics? returnItemCollectionMetrics?;
     # Use ReturnValues if you want to get the item attributes as they appeared before they were updated
     # with the PutItem request. For PutItem, the valid values are: NONE | ALL_OLD
-    ReturnValues returnValues?;
+    ReturnValues? returnValues?;
 |};
 
 # Represents the request payload to update table.

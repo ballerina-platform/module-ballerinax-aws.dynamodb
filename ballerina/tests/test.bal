@@ -149,7 +149,7 @@ function testListTables() returns error? {
     dependsOn: [testListTables]
 }
 function testPutItem() returns error? {
-    PutItemInput request = {
+    CreateItemInput request = {
         tableName: mainTable,
         item: {
             "LastPostDateTime": {
@@ -289,7 +289,7 @@ function testScan() returns error? {
     dependsOn: [testScan]
 }
 function testWriteBatchItems() returns error? {
-    BatchWriteItemInput request = {
+    WriteBatchItemInput request = {
         requestItems: {
             "SecondaryThread": [
                 {
@@ -409,7 +409,7 @@ function testWriteBatchItems() returns error? {
         returnConsumedCapacity: TOTAL
     };
 
-    BatchWriteItemOutput response = check dynamoDBClient->batchWriteItem(request);
+    WriteBatchItemOutput response = check dynamoDBClient->writeBatchItem(request);
     log:printInfo(response.toString());
     log:printInfo("Testing WriteBatchItems(put) is completed.");
 }
@@ -517,7 +517,7 @@ function executeWithRetry(function () returns error? testFunc, decimal delayBetw
     int currentRetryCount = 0;
     error? testResult = ();
     while (currentRetryCount < maxRetryCount) {
-        if (currentRetryCount > 0) {
+        if currentRetryCount > 0 {
             runtime:sleep(delayBetweenRetries);
             log:printWarn("Function returned an error. Retrying for "
                 + (currentRetryCount + 1).toString() + "th time");
@@ -525,10 +525,10 @@ function executeWithRetry(function () returns error? testFunc, decimal delayBetw
         testResult = testFunc();
         currentRetryCount = currentRetryCount + 1;
         if testResult is error {
-            if (errorMsg == ()) {
+            if errorMsg == () {
                 continue;
             } else {
-                if (string:includes(testResult.message(), errorMsg, 0)) {
+                if string:includes(testResult.message(), errorMsg, 0) {
                     continue;
                 } else {
                     break;

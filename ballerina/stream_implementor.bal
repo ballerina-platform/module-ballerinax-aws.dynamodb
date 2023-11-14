@@ -38,12 +38,12 @@ class TableStream {
     }
 
     public isolated function next() returns record {|string value;|}|error? {
-        if (self.index < self.currentEntries.length()) {
+        if self.index < self.currentEntries.length() {
             record {|string value;|} tableName = {value: self.currentEntries[self.index]};
             self.index += 1;
             return tableName;
         }
-        if (self.exclusiveStartTableName is string) {
+        if self.exclusiveStartTableName is string {
             self.index = 0;
             self.currentEntries = check self.fetchTableNames();
             record {|string value;|} tableName = {value: self.currentEntries[self.index]};
@@ -97,15 +97,15 @@ class ScanStream {
     }
 
     public isolated function next() returns record {|ScanOutput value;|}|error? {
-        if (self.index < self.currentEntries.length()) {
+        if self.index < self.currentEntries.length() {
             record {|ScanOutput value;|} response = {value: self.currentEntries[self.index]};
             self.index += 1;
             return response;
         }
-        if (self.scanRequest?.exclusiveStartKey is map<AttributeValue>) {
+        if self.scanRequest?.exclusiveStartKey is map<AttributeValue> {
             self.index = 0;
             self.currentEntries = check self.fetchScan();
-            if (self.index < self.currentEntries.length()) {
+            if self.index < self.currentEntries.length() {
                 record {|ScanOutput value;|} response = {value: self.currentEntries[self.index]};
                 self.index += 1;
                 return response;
@@ -164,15 +164,15 @@ class QueryStream {
     }
 
     public isolated function next() returns record {|QueryOutput value;|}|error? {
-        if (self.index < self.currentEntries.length()) {
+        if self.index < self.currentEntries.length() {
             record {|QueryOutput value;|} response = {value: self.currentEntries[self.index]};
             self.index += 1;
             return response;
         }
-        if (self.queryRequest?.exclusiveStartKey is map<AttributeValue>) {
+        if self.queryRequest?.exclusiveStartKey is map<AttributeValue> {
             self.index = 0;
             self.currentEntries = check self.fetchQuery();
-            if (self.index < self.currentEntries.length()) {
+            if self.index < self.currentEntries.length() {
                 record {|QueryOutput value;|} response = {value: self.currentEntries[self.index]};
                 self.index += 1;
                 return response;
@@ -231,15 +231,15 @@ class ItemsBatchGetStream {
     }
 
     public isolated function next() returns record {|BatchItem value;|}|error? {
-        if (self.index < self.currentEntries.length()) {
+        if self.index < self.currentEntries.length() {
             record {|BatchItem value;|} response = {value: self.currentEntries[self.index]};
             self.index += 1;
             return response;
         }
-        if (self.itemsBatchGetRequest.requestItems.keys().length() != 0) {
+        if self.itemsBatchGetRequest.requestItems.keys().length() != 0 {
             self.index = 0;
             self.currentEntries = check self.fetchBatchItems();
-            if (self.index < self.currentEntries.length()) {
+            if self.index < self.currentEntries.length() {
                 record {|BatchItem value;|} response = {value: self.currentEntries[self.index]};
                 self.index += 1;
                 return response;

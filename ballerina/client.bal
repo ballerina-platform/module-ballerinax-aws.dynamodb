@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/http;
 import ballerinax/'client.config;
 
@@ -48,7 +49,7 @@ public isolated client class Client {
         self.awsDynamoDb = check new (endpoint, httpClientConfig);
     }
 
-    # Create a table. The CreateTable operation adds a new table to your account. In an AWS account, table names must be
+    # Creates a table. The CreateTable operation adds a new table to your account. In an AWS account, table names must be
     # unique within each Region. That is, you can have two tables with same name if you create the tables in diﬀerent
     # Regions.
     #
@@ -67,7 +68,7 @@ public isolated client class Client {
         return tableDescription.cloneWithType(TableDescription);
     }
 
-    # Delete a table.
+    # Deletes a table.
     #
     # + tableName - The name of the table to delete
     # + return - If success, dynamodb:DeleteTableOutput record, else an error
@@ -86,7 +87,7 @@ public isolated client class Client {
         return tableDescription.cloneWithType(TableDescription);
     }
 
-    # Describe a table.
+    # Describes a table.
     #
     # + tableName - The name of the table to delete
     # + return - If success, dynamodb:DescribeTableOutput record, else an error
@@ -105,7 +106,7 @@ public isolated client class Client {
         return 'table.cloneWithType(TableDescription);
     }
 
-    # List all tables.
+    # Lists all tables.
     #
     # + return - If success, stream<string, error?>, else an error
     remote isolated function listTables() returns stream<string, error?>|error {
@@ -115,7 +116,7 @@ public isolated client class Client {
         return new stream<string, error?>(tableStream);
     }
 
-    # Update a table.
+    # Updates a table.
     #
     # + tableUpdateRequest - The request payload to update a table 
     # + return - If success, dynamodb:UpdateTableOutput record, else an error
@@ -139,7 +140,7 @@ public isolated client class Client {
     #
     # + request - The request payload to create an item
     # + return - If success, dynamodb:ItemDescription record, else an error
-    remote isolated function createItem(PutItemInput request) returns ItemDescription|error {
+    remote isolated function createItem(CreateItemInput request) returns ItemDescription|error {
         string target = VERSION + DOT + "PutItem";
         json payload = check request.cloneWithType(json);
         convertJsonKeysToUpperCase(payload);
@@ -151,7 +152,7 @@ public isolated client class Client {
         return response.cloneWithType(ItemDescription);
     }
 
-    # Get an item.
+    # Gets an item.
     #
     # + request - The request payload to get an item
     # + return - If success, dynamodb:GetItemOutput record, else an error
@@ -167,7 +168,7 @@ public isolated client class Client {
         return response.cloneWithType(GetItemOutput);
     }
 
-    # Delete an item.
+    # Deletes an item.
     #
     # + request - The request payload to delete an item
     # + return - If success, dynamodb:ItemDescription record, else an error
@@ -182,7 +183,7 @@ public isolated client class Client {
         return response;
     }
 
-    # Update an item
+    # Updates an item
     #
     # + request - The request payload to update an item
     # + return - If success, dynamodb:ItemDescription record, else an error
@@ -240,7 +241,7 @@ public isolated client class Client {
     #
     # + request - The request payload to write items as batch
     # + return - If success, dynamodb:BatchWriteItemOutput record, else an error
-    remote isolated function batchWriteItem(BatchWriteItemInput request) returns BatchWriteItemOutput|error {
+    remote isolated function writeBatchItem(WriteBatchItemInput request) returns WriteBatchItemOutput|error {
         string target = VERSION + DOT + "BatchWriteItem";
         json payload = check request.cloneWithType(json);
         convertJsonKeysToUpperCase(payload);
@@ -249,7 +250,7 @@ public isolated client class Client {
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
         convertJsonKeysToCamelCase(response);
-        return response.cloneWithType(BatchWriteItemOutput);
+        return response.cloneWithType(WriteBatchItemOutput);
     }
 
     # Returns the current provisioned-capacity quotas for your AWS account in a Region, both for the Region as a whole

@@ -47,6 +47,9 @@ isolated map<string> responseDataBindingMap = {
     "SS": "ss"
 };
 
+# Represents any error related to the dynamodb module.
+public type Error distinct error;
+
 isolated function getSignedRequestHeaders(string host, string accessKey, string secretKey, string region, string verb,
         string uri, string amzTarget, json requestPayload) returns map<string>|error {
 
@@ -59,7 +62,7 @@ isolated function getSignedRequestHeaders(string host, string accessKey, string 
     string|error dateStamp = utcToString(currentTime, SHORT_DATE_FORMAT);
 
     // remove brackets
-    if (amzDate is string && dateStamp is string) {
+    if amzDate is string && dateStamp is string {
         string canonicalQuerystring = EMPTY_STRING;
 
         string canonicalHeaders = CONTENT_TYPE + COLON + content_type + NEW_LINE + HOST + COLON + host + NEW_LINE +
@@ -95,9 +98,9 @@ isolated function getSignedRequestHeaders(string host, string accessKey, string 
 
         return headers;
     } else {
-        if (amzDate is error) {
+        if amzDate is error {
             return error(GENERATE_SIGNED_REQUEST_HEADERS_FAILED_MSG, amzDate);
-        } else if (dateStamp is error) {
+        } else if dateStamp is error {
             return error(GENERATE_SIGNED_REQUEST_HEADERS_FAILED_MSG, dateStamp);
         } else {
             return error(GENERATE_SIGNED_REQUEST_HEADERS_FAILED_MSG);
@@ -137,7 +140,7 @@ isolated function getCanonicalURI(string requestURI) returns string|error {
 
 isolated function handleHttpResponse(http:Response httpResponse) returns error? {
     int statusCode = httpResponse.statusCode;
-    if (statusCode != http:STATUS_NO_CONTENT && statusCode != http:STATUS_OK) {
+    if statusCode != http:STATUS_NO_CONTENT && statusCode != http:STATUS_OK {
         json jsonPayload = check httpResponse.getJsonPayload();
         return error(statusCode.toString() + COLON + jsonPayload.toString());
     }
@@ -147,19 +150,19 @@ isolated function convertJsonKeysToCamelCase(json req) {
     map<json> mapValue = <map<json>>req;
     foreach var [key, value] in mapValue.entries() {
         string converted = lowercaseFirstLetter(key);
-        if (converted != key) {
+        if converted != key {
             any|error removeResult = mapValue.remove(key);
             mapValue[converted] = value;
         }
-        if (value is json[]) {
+        if value is json[] {
             json[] innerJson = <json[]>mapValue[converted];
             foreach var item in innerJson {
                 // assume no arrays inside array
-                if (item is map<json>) {
+                if item is map<json> {
                     convertJsonKeysToCamelCase(item);
                 }
             }
-        } else if (value is map<json>) {
+        } else if value is map<json> {
             convertJsonKeysToCamelCase(value);
         }
     }
@@ -175,20 +178,20 @@ isolated function convertJsonKeysToUpperCase(json req) {
     map<json> mapValue = <map<json>>req;
     foreach var [key, value] in mapValue.entries() {
         string converted = uppercaseFirstLetter(key);
-        if (converted != key) {
+        if converted != key {
             // add a comment why we do this
             any|error removeResult = mapValue.remove(key);
             mapValue[converted] = value;
         }
-        if (value is json[]) {
+        if value is json[] {
             json[] innerJson = <json[]>mapValue[converted];
             foreach var item in innerJson {
                 // assume no arrays inside array
-                if (item is map<json>) {
+                if item is map<json> {
                     convertJsonKeysToUpperCase(item);
                 }
             }
-        } else if (value is map<json>) {
+        } else if value is map<json> {
             convertJsonKeysToUpperCase(value);
         }
     }
