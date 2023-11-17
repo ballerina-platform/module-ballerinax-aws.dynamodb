@@ -1,6 +1,6 @@
 # Specification: Ballerina DynamoDB Library
 
-_Owners_: @daneshk @bhashinee  
+_Owners_: @bhashinee  
 _Reviewers_: @daneshk  
 _Created_: 2023/11/09  
 _Updated_: 2022/11/10  
@@ -80,6 +80,8 @@ Client dynamoDBClient = check new (config);
 
 #### [createTable](#createTable)
 
+This API can be used to create a new table in DynamoDB with the specified parameters.
+
 ```ballerina
 # Creates table in your account. The CreateTable operation adds a new table to your account. In # an AWS account, table names must be unique within each Region. That is, you can have two # tables with same name if you create the tables in diﬀerent Regions.
 #
@@ -91,6 +93,8 @@ remote isolated function createTable(CreateTableInput tableCreationRequest) retu
 
 #### [deleteTable](#deleteTable)
 
+This API can be used to delete a table in DynamoDB with the given table name.
+
 ```ballerina
 # Deletes a table.
 #
@@ -100,6 +104,8 @@ remote isolated function deleteTable(string tableName) returns TableDescription|
 ```
 
 #### [describeTable](#describeTable)
+
+This API can be used to get the table details in DynamoDB with the given table name.
 
 ```ballerina
 # Describes a table.
@@ -111,6 +117,8 @@ remote isolated function describeTable(string tableName) returns TableDescriptio
 
 #### [listTables](#listTables)
 
+This API can be used to list all the tables relavant to your account.
+
 ```ballerina
 # Lists all tables.
 #
@@ -119,6 +127,8 @@ remote isolated function listTables() returns stream<string, error?>|error {
 ```
 
 #### [updateTable](#updateTable)
+
+This API can be used to update the entries in the table with the specified parameters.
 
 ```ballerina
 # Updates a table.
@@ -129,6 +139,8 @@ remote isolated function updateTable(UpdateTableInput tableUpdateRequest) return
 ```
 
 #### [createItem](#createItem)
+
+This API can be used to add a new item to the table.
 
 ```ballerina
 # Creates a new item, or replaces an old item with a new item. If an item that has the same primary key as the new
@@ -143,6 +155,8 @@ remote isolated function createItem(CreateItemInput request) returns ItemDescrip
 
 #### [getItem](#getItem)
 
+This API can be used to get a specific item from the table.
+
 ```ballerina
 # Gets an item.
 #
@@ -152,6 +166,8 @@ remote isolated function getItem(GetItemInput request) returns GetItemOutput|err
 ```
 
 #### [deleteItem](#deleteItem)
+
+This API can be used to delete a specific item from the table.
 
 ```ballerina
 # Deletes an item.
@@ -163,6 +179,8 @@ remote isolated function deleteItem(DeleteItemInput request) returns ItemDescrip
 
 #### [updateItem](#updateItem)
 
+This API can be used to update a specific item from the table.
+
 ```ballerina
 # Updates an item
 #
@@ -172,6 +190,8 @@ remote isolated function updateItem(UpdateItemInput request) returns ItemDescrip
 ```
 
 #### [query](#query)
+
+This API can be used retrieve items from a table that match specific criteria.
 
 ```ballerina
 # Returns all items with a particular partition key value. You must provide the name of the partition key attribute
@@ -185,6 +205,8 @@ remote isolated function query(QueryInput request) returns stream<QueryOutput, e
 
 #### [scan](#scan)
 
+This API can be used to read all the items in a table and return them as a result set.
+
 ```ballerina
 # Returns one or more items and item attributes by accessing every item in a table or a secondary index.
 #
@@ -194,6 +216,8 @@ remote isolated function scan(ScanInput request) returns stream<ScanOutput, erro
 ```
 
 #### [getBatchItem](#getBatchItem)
+
+This API can be used to retrieve multiple items from one or more tables in a single request. This operation is designed for efficiency and allows you to request items from multiple tables or multiple items from a single table using a single API call.
 
 ```ballerina
 # Returns the attributes of one or more items from one or more tables. You identify requested items by primary key.
@@ -205,6 +229,8 @@ remote isolated function getBatchItem(GetBatchItemInput request) returns stream<
 
 #### [writeBatchItem](#writeBatchItem)
 
+This API can be used to perform multiple write operations (PutItem, UpdateItem, DeleteItem) across one or more tables in a single request. This operation is designed for efficiency and allows you to execute multiple write operations with a single API call.
+
 ```ballerina
 # Puts or deletes multiple items in one or more tables.
 #
@@ -214,6 +240,8 @@ remote isolated function batchWriteItem(BatchWriteItemInput request) returns Bat
 ```
 
 #### [describeLimits](#describeLimits)
+
+This API can be used to get information about the current account limits and usage for certain operations in Amazon DynamoDB.
 
 ```ballerina
 # Returns the current provisioned-capacity quotas for your AWS account in a Region, both for the Region as a whole
@@ -225,6 +253,8 @@ remote isolated function describeLimits() returns LimitDescription|error {
 
 #### [createBackup](#createBackup)
 
+This API can be used to manually create a backup for a table.
+
 ```ballerina
 # Creates a back up from the given table
 #
@@ -235,6 +265,8 @@ remote isolated function createBackup(CreateBackupInput request) returns BackupD
 
 #### [deleteBackup](#deleteBackup)
 
+This API can be used to delete a backup of a table.
+
 ```ballerina
 # Deletes an existing backup of a table.
 #
@@ -244,6 +276,8 @@ remote isolated function deleteBackup(string backupArn) returns BackupDescriptio
 ```
 
 #### [getTTL](#getTTL)
+
+This API can be used to get the Time to Live status of a table.
 
 ```ballerina
 # The description of the Time to Live (TTL) status on the specified table.
