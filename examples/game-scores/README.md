@@ -2,7 +2,7 @@
 
 ## Overview
 
-Imagine you are developing a mobile gaming application that tracks high scores for different games. In this scenario, DynamoDB could be employed to manage the backend data storage efficiently. This example demonstrates how DynamoDB can be used to store and manage high scores efficiently, providing low-latency access to data and allowing for seamless scaling as the number of players and high scores grows. DynamoDB's ability to handle large amounts of data with high throughput makes it suitable for such real-time, dynamic applications.
+Imagine you are developing a mobile gaming application that tracks high scores for different games. In this scenario, DynamoDB could be employed to manage the backend data storage efficiently. This example demonstrates how DynamoDB can be used to store and manage high scores efficiently, providing low-latency access to data and allowing for seamless scaling as the number of players and high scores grows. DynamoDB's ability to handle large amounts of data with high throughput makes it suitable for such real-time, dynamic applications. This example demonstrates how the basic operations of updating/deleting the high scores can be performed using the `dynamodb` connector.
 
 ## Implementation
 

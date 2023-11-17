@@ -63,7 +63,7 @@ public function main() returns error? {
         },
         updateExpression: "set PlayerName = :name",
         expressionAttributeValues: {
-            ":name": {"S": "newPlayer"}
+            ":name": {"S": "Jasper"}
         }
     };
     dynamodb:ItemDescription updateItemResult = check amazonDynamodbClient->updateItem(updateItemInput);
