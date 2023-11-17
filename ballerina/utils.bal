@@ -61,7 +61,6 @@ isolated function getSignedRequestHeaders(string host, string accessKey, string 
     string|error amzDate = utcToString(currentTime, ISO8601_BASIC_DATE_FORMAT);
     string|error dateStamp = utcToString(currentTime, SHORT_DATE_FORMAT);
 
-    // remove brackets
     if amzDate is string && dateStamp is string {
         string canonicalQuerystring = EMPTY_STRING;
 

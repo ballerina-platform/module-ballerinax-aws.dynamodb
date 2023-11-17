@@ -74,7 +74,7 @@ To use the `dynamodb` connector, you need AWS credentials. For that, you need to
 
 1. **Create an AWS Account**: If you don't already have an AWS account, you need to create one from [AWS Management Console](https://aws.amazon.com/).
 
-2. **Create an IAM User**: Create a user in IAM console and set up and necessary permissions and attach policies.
+2. **Create an IAM User**: Create a user in IAM console, add necessary permissions and attach policies.
 
 3. **Get Access Key ID and Secret Access Key**: Get the Access Key ID and Secret Access Key once the user is created.
 

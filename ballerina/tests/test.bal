@@ -18,13 +18,17 @@ import ballerina/lang.runtime;
 import ballerina/log;
 import ballerina/os;
 import ballerina/test;
+import ballerina/random;
+import ballerina/io;
 
 configurable string accessKeyId = os:getEnv("ACCESS_KEY_ID");
 configurable string secretAccessKey = os:getEnv("SECRET_ACCESS_KEY");
 configurable string region = os:getEnv("REGION");
 
-final string mainTable = "Thread";
-final string secondaryTable = "SecondaryThread";
+float randomValue = random:createDecimal();
+
+final string mainTable = "Thread" + randomValue.toString();
+final string secondaryTable = "SecondaryThread" + randomValue.toString();
 
 ConnectionConfig config = {
     awsCredentials: {accessKeyId: accessKeyId, secretAccessKey: secretAccessKey},
@@ -291,7 +295,7 @@ function testScan() returns error? {
 function testWriteBatchItems() returns error? {
     WriteBatchItemInput request = {
         requestItems: {
-            "SecondaryThread": [
+            [secondaryTable]: [
                 {
                     putRequest: {
                         item: {
@@ -409,6 +413,8 @@ function testWriteBatchItems() returns error? {
         returnConsumedCapacity: TOTAL
     };
 
+    io:println(request.toString());
+
     WriteBatchItemOutput response = check dynamoDBClient->writeBatchItem(request);
     log:printInfo(response.toString());
     log:printInfo("Testing WriteBatchItems(put) is completed.");
@@ -420,7 +426,7 @@ function testWriteBatchItems() returns error? {
 function testGetBatchItems() returns error? {
     GetBatchItemInput request = {
         requestItems: {
-            "Thread": {
+            [mainTable]: {
                 keys: [
                     {
                         "ForumName": {"S": "Amazon DynamoDB"},
@@ -429,7 +435,7 @@ function testGetBatchItems() returns error? {
                 ],
                 projectionExpression: "ForumName, Message"
             },
-            "SecondaryThread": {
+            [secondaryTable]: {
                 keys: [
                     {
                         "ForumName": {"S": "Amazon S3"},
@@ -546,7 +552,7 @@ function executeWithRetry(function () returns error? testFunc, decimal delayBetw
 }
 function testCreateBackupAndDeleteBackup() returns error? {
     CreateBackupInput backupRequest = {
-        tableName: "Thread",
+        tableName: mainTable,
         backupName: "ThreadBackup"
     };
     BackupDetails response = check dynamoDBClient->createBackup(backupRequest);
@@ -560,6 +566,6 @@ function testCreateBackupAndDeleteBackup() returns error? {
     dependsOn: [testCreateTable]
 }
 function testTimeToLive() returns error? {
-    TTLDescription response = check dynamoDBClient->getTTL("Thread");
+    TTLDescription response = check dynamoDBClient->getTTL(mainTable);
     test:assertEquals(response.timeToLiveStatus, "DISABLED");
 }
