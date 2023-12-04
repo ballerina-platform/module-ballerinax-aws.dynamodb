@@ -12,6 +12,36 @@ The connector provides the capability to programatically handle AWS DynamoDB rel
 For more information, go to the module(s).
 - [aws.dynamodb](./Module.md)
 
+## Set up DynamoDB credentials
+
+To invoke the DynamoDB REST API, you need AWS credentials. Below is a step-by-step guide on how to obtain these credentials:
+
+1. Create an AWS Account:
+* If you don't already have an AWS account, you need to create one. Go to the AWS Management Console, click on "Create an AWS Account," and follow the instructions.
+
+2. Access the AWS Identity and Access Management (IAM) Console:
+
+* Once logged into the [AWS Management Console](https://aws.amazon.com/), go to the IAM console by selecting "Services" and then choosing "IAM" under the "Security, Identity, & Compliance" section.
+
+3. Create an IAM User:
+
+* In the IAM console, navigate to "Users" and click on "Add user."
+* Enter a username, and under "Select AWS access type," choose "Programmatic access."
+* Click through the permissions setup, attaching policies that grant access to DynamoDB if you have specific requirements.
+* Review the details and click "Create user."
+
+4. Access Key ID and Secret Access Key:
+
+* Once the user is created, you will see a success message. Take note of the "Access key ID" and "Secret access key" displayed on the confirmation screen. These credentials are needed to authenticate your requests.
+
+5. Securely Store Credentials:
+
+* Download the CSV file containing the credentials, or copy the "Access key ID" and "Secret access key" to a secure location. This information is sensitive and should be handled with care.
+
+6. Use the Credentials in Your Application:
+
+* In your application, use the obtained "Access key ID" and "Secret access key" to authenticate requests to the DynamoDB REST API.
+
 ## Quickstart
 
 **Note**: Ensure you follow the [prerequisites](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb#set-up-dynamodb-credentials) to get the credentials to be used.
@@ -67,18 +97,6 @@ The `dynamodb` connector provides practical examples illustrating usage in vario
     Manage a mobile gaming application dashboard that tracks high scores for different games.
 
 For comprehensive information about the connector's functionality, configuration, and usage in Ballerina programs, refer to the `dynamodb` connector's reference guide in [Ballerina Central](https://central.ballerina.io/ballerinax/aws.dynamodb/latest).
-
-## Set up DynamoDB credentials
-
-To use the `dynamodb` connector, you need AWS credentials. For that, you need to create an IAM user and generate an access key and a secret key for the user. 
-
-1. **Create an AWS Account**: If you don't already have an AWS account, you need to create one from [AWS Management Console](https://aws.amazon.com/).
-
-2. **Create an IAM User**: Create a user in IAM console, add necessary permissions and attach policies.
-
-3. **Get Access Key ID and Secret Access Key**: Get the Access Key ID and Secret Access Key once the user is created.
-
-For detailed steps, including necessary links, refer to the [Setup guide](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb/tree/master/docs/setup/setup.md).
 
 ## Issues and projects 
 

@@ -178,7 +178,6 @@ isolated function convertJsonKeysToUpperCase(json req) {
     foreach var [key, value] in mapValue.entries() {
         string converted = uppercaseFirstLetter(key);
         if converted != key {
-            // add a comment why we do this
             any|error removeResult = mapValue.remove(key);
             mapValue[converted] = value;
         }
