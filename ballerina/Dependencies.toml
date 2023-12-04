@@ -5,7 +5,7 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.8.0-20230830-220400-8a7556d8"
+distribution-version = "2201.8.3"
 
 [[package]]
 org = "ballerina"
@@ -269,9 +269,6 @@ dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"}
 ]
-modules = [
-	{org = "ballerina", packageName = "os", moduleName = "os"}
-]
 
 [[package]]
 org = "ballerina"
@@ -366,7 +363,6 @@ dependencies = [
 	{org = "ballerina", name = "lang.array"},
 	{org = "ballerina", name = "lang.runtime"},
 	{org = "ballerina", name = "log"},
-	{org = "ballerina", name = "os"},
 	{org = "ballerina", name = "random"},
 	{org = "ballerina", name = "regex"},
 	{org = "ballerina", name = "test"},
