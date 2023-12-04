@@ -2,7 +2,7 @@
 distribution = "2201.8.0"
 org = "ballerinax"
 name = "aws.dynamodb"
-version = "2.1.0"
+version = "@toml.version@"
 authors = ["Ballerina"]
 repository = "https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb"
 keywords = ["Communication/Email", "Cost/Free", "Vendor/Google"]
