@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/crypto;
-import ballerina/http;
 import ballerina/jballerina.java;
 import ballerina/lang.array;
 import ballerina/regex;
@@ -137,14 +136,6 @@ isolated function getCanonicalURI(string requestURI) returns string|error {
     return regex:replaceAll(value, ENCODED_SLASH, SLASH);
 }
 
-isolated function handleHttpResponse(http:Response httpResponse) returns error? {
-    int statusCode = httpResponse.statusCode;
-    if statusCode != http:STATUS_NO_CONTENT && statusCode != http:STATUS_OK {
-        json jsonPayload = check httpResponse.getJsonPayload();
-        return error(statusCode.toString() + COLON + jsonPayload.toString());
-    }
-}
-
 isolated function convertJsonKeysToCamelCase(json req) {
     map<json> mapValue = <map<json>>req;
     foreach var [key, value] in mapValue.entries() {
@@ -164,12 +155,6 @@ isolated function convertJsonKeysToCamelCase(json req) {
         } else if value is map<json> {
             convertJsonKeysToCamelCase(value);
         }
-    }
-}
-
-function convertJsonArrayToCamelCase(json[] jsonArr) {
-    foreach var item in jsonArr {
-        convertJsonKeysToCamelCase(item);
     }
 }
 

@@ -39,9 +39,6 @@ Client dynamoDBClient = check new (config);
 
 @test:Config {}
 function testCreateTable() returns error? {
-    io:println("Access Key ID:" + accessKeyId);
-    io:println("Secret Key ID:" + secretAccessKey);
-    io:println("Region:" + region);
     CreateTableInput payload = {
         attributeDefinitions: [
             {
