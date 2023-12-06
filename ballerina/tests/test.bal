@@ -39,7 +39,7 @@ Client dynamoDBClient = check new (config);
 
 @test:Config {}
 function testCreateTable() returns error? {
-    CreateTableInput payload = {
+    TableCreateInput payload = {
         attributeDefinitions: [
             {
                 attributeName: "ForumName",
@@ -121,7 +121,7 @@ function updateTable() returns error? {
 }
 
 function testUpdateTable() returns error? {
-    UpdateTableInput request = {
+    TableUpdateInput request = {
         tableName: mainTable,
         provisionedThroughput: {
             readCapacityUnits: 10,
@@ -153,7 +153,7 @@ function testListTables() returns error? {
     dependsOn: [testListTables]
 }
 function testPutItem() returns error? {
-    CreateItemInput request = {
+    ItemCreateInput request = {
         tableName: mainTable,
         item: {
             "LastPostDateTime": {
@@ -202,7 +202,7 @@ function testPutItem() returns error? {
     dependsOn: [testPutItem]
 }
 function testGetItem() returns error? {
-    GetItemInput request = {
+    ItemGetInput request = {
         tableName: mainTable,
         'key: {
             "ForumName": {
@@ -216,7 +216,7 @@ function testGetItem() returns error? {
         consistentRead: true,
         returnConsumedCapacity: TOTAL
     };
-    GetItemOutput response = check dynamoDBClient->getItem(request);
+    ItemGetOutput response = check dynamoDBClient->getItem(request);
     log:printInfo(response?.item.toString());
     log:printInfo("Testing GetItem is completed.");
 }
@@ -225,7 +225,7 @@ function testGetItem() returns error? {
     dependsOn: [testGetItem]
 }
 function testUpdateItem() returns error? {
-    UpdateItemInput request = {
+    ItemUpdateInput request = {
         tableName: mainTable,
         'key: {
             "ForumName": {
@@ -293,7 +293,7 @@ function testScan() returns error? {
     dependsOn: [testScan]
 }
 function testWriteBatchItems() returns error? {
-    WriteBatchItemInput request = {
+    BatchItemInsertInput request = {
         requestItems: {
             [secondaryTable]: [
                 {
@@ -415,7 +415,7 @@ function testWriteBatchItems() returns error? {
 
     io:println(request.toString());
 
-    WriteBatchItemOutput response = check dynamoDBClient->writeBatchItem(request);
+    BatchItemWriteOutput response = check dynamoDBClient->writeBatchItem(request);
     log:printInfo(response.toString());
     log:printInfo("Testing WriteBatchItems(put) is completed.");
 }
@@ -424,7 +424,7 @@ function testWriteBatchItems() returns error? {
     dependsOn: [testWriteBatchItems]
 }
 function testGetBatchItems() returns error? {
-    GetBatchItemInput request = {
+    BatchItemGetInput request = {
         requestItems: {
             [mainTable]: {
                 keys: [
@@ -459,7 +459,7 @@ function testGetBatchItems() returns error? {
     dependsOn: [testGetBatchItems]
 }
 function testDeleteItem() returns error? {
-    DeleteItemInput request = {
+    ItemDeleteInput request = {
         tableName: mainTable,
         'key: {
             "ForumName": {
@@ -551,7 +551,7 @@ function executeWithRetry(function () returns error? testFunc, decimal delayBetw
     dependsOn: [testCreateTable]
 }
 function testCreateBackupAndDeleteBackup() returns error? {
-    CreateBackupInput backupRequest = {
+    BackupCreateInput backupRequest = {
         tableName: mainTable,
         backupName: "ThreadBackup"
     };
