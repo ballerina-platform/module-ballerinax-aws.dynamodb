@@ -73,7 +73,7 @@ public type LimitDescription record {
 };
 
 # Represents the response after `WriteBatchItem` operation.
-public type BatchItemWriteOutput record {
+public type BatchItemInsertOutput record {
     # The capacity units consumed by the entire `BatchWriteItem` operation
     ConsumedCapacity[]? consumedCapacity?;
     # A list of tables that were processed by `BatchWriteItem` and, for each table, information about

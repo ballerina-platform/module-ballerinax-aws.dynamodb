@@ -229,7 +229,7 @@ public isolated client class Client {
     #
     # + batchItemGetInput - The request payload to get items as batch
     # + return - If success, stream<dynamodb:BatchItem, error?>, else an error
-    remote isolated function getBatchItem(BatchItemGetInput batchItemGetInput) returns stream<BatchItem, error?>|error {
+    remote isolated function getBatchItems(BatchItemGetInput batchItemGetInput) returns stream<BatchItem, error?>|error {
         ItemsBatchGetStream itemsBatchGetStream = check new ItemsBatchGetStream(self.awsDynamoDb, self.awsHost,
             self.accessKeyId, self.secretAccessKey,
             self.region, batchItemGetInput
@@ -240,8 +240,8 @@ public isolated client class Client {
     # Puts or deletes multiple items in one or more tables.
     #
     # + batchItemInsertInput - The request payload to write items as batch
-    # + return - If success, dynamodb:BatchItemWriteOutput record, else an error
-    remote isolated function writeBatchItem(BatchItemInsertInput batchItemInsertInput) returns BatchItemWriteOutput|error {
+    # + return - If success, dynamodb:BatchItemInsertOutput record, else an error
+    remote isolated function writeBatchItems(BatchItemInsertInput batchItemInsertInput) returns BatchItemInsertOutput|error {
         string target = VERSION + DOT + "BatchWriteItem";
         json payload = check batchItemInsertInput.cloneWithType(json);
         convertJsonKeysToUpperCase(payload);
@@ -250,7 +250,7 @@ public isolated client class Client {
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
         convertJsonKeysToCamelCase(response);
-        return response.cloneWithType(BatchItemWriteOutput);
+        return response.cloneWithType(BatchItemInsertOutput);
     }
 
     # Returns the current provisioned-capacity quotas for your AWS account in a Region, both for the Region as a whole
