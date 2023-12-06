@@ -79,7 +79,6 @@ public enum KeyType {
 
 # Represents the types of projections that can be used in a DynamoDB query.
 public enum ProjectionType {
-    # Only the key attributes of the queried item(s) are projected.
     KEYS_ONLY,
     # All of the item attributes are projected.
     ALL,
@@ -188,9 +187,7 @@ public enum ReturnConsumedCapacity {
 
 # Represents the enum for the return item collection metrics in AWS DynamoDB.
 public enum ReturnItemCollectionMetrics {
-    # Returns the size of the item collection that was modified
     SIZE,
-    # Returns no statistics about item collections
     NONE
 }
 

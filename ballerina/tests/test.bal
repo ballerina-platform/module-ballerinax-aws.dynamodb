@@ -415,7 +415,7 @@ function testWriteBatchItems() returns error? {
 
     io:println(request.toString());
 
-    BatchItemWriteOutput response = check dynamoDBClient->writeBatchItem(request);
+    BatchItemInsertOutput response = check dynamoDBClient->writeBatchItems(request);
     log:printInfo(response.toString());
     log:printInfo("Testing WriteBatchItems(put) is completed.");
 }
@@ -448,7 +448,7 @@ function testGetBatchItems() returns error? {
         returnConsumedCapacity: TOTAL
     };
 
-    stream<BatchItem, error?> response = check dynamoDBClient->getBatchItem(request);
+    stream<BatchItem, error?> response = check dynamoDBClient->getBatchItems(request);
     check response.forEach(function(BatchItem item) {
         log:printInfo(item?.item.toString());
     });

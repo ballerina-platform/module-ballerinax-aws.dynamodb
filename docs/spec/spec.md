@@ -33,8 +33,8 @@ The conforming implementation of the specification is released and included in t
         9. [updateItem](#updateItem)
         10. [query](#query)
         11. [scan](#scan)
-        12. [getBatchItem](#getBatchItem)
-        13. [writeBatchItem](#writeBatchItem)
+        12. [getBatchItems](#getBatchItems)
+        13. [writeBatchItems](#writeBatchItems)
         14. [describeLimits](#describeLimits)
         15. [createBackup](#createBackup)
         16. [deleteBackup](#deleteBackup)
@@ -216,7 +216,7 @@ This API can be used to read all the items in a table and return them as a resul
 remote isolated function scan(ScanInput scanInput) returns stream<ScanOutput, error?>|error {
 ```
 
-#### [getBatchItem](#getBatchItem)
+#### [getBatchItems](#getBatchItems)
 
 This API can be used to retrieve multiple items from one or more tables in a single request. This operation is designed for efficiency and allows you to request items from multiple tables or multiple items from a single table using a single API call.
 
@@ -225,10 +225,10 @@ This API can be used to retrieve multiple items from one or more tables in a sin
 #
 # + batchItemGetInput - The request payload to get items as batch
 # + return - If success, stream<dynamodb:BatchItem, error?>, else an error
-remote isolated function getBatchItem(BatchItemGetInput batchItemGetInput) returns stream<BatchItem, error?>|error {
+remote isolated function getBatchItems(BatchItemGetInput batchItemGetInput) returns stream<BatchItem, error?>|error {
 ```
 
-#### [writeBatchItem](#writeBatchItem)
+#### [writeBatchItems](#writeBatchItems)
 
 This API can be used to perform multiple write operations (PutItem, UpdateItem, DeleteItem) across one or more tables in a single request. This operation is designed for efficiency and allows you to execute multiple write operations with a single API call.
 
@@ -236,8 +236,8 @@ This API can be used to perform multiple write operations (PutItem, UpdateItem, 
 # Puts or deletes multiple items in one or more tables.
 #
 # + batchItemInsertInput - The request payload to write items as batch
-# + return - If success, dynamodb:BatchItemWriteOutput record, else an error
-remote isolated function writeBatchItem(BatchItemInsertInput batchItemInsertInput) returns BatchItemWriteOutput|error {
+# + return - If success, dynamodb:BatchItemInsertOutput record, else an error
+remote isolated function writeBatchItems(BatchItemInsertInput batchItemInsertInput) returns BatchItemInsertOutput|error {
 ```
 
 #### [describeLimits](#describeLimits)
