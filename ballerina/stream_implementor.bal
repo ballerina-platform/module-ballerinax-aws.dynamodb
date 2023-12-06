@@ -123,7 +123,7 @@ class ScanStream {
                                                                         POST, self.uri, target, payload);
         json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
         convertJsonKeysToCamelCase(jsonResponse);
-        QueryOrScanResponse response = check jsonResponse.cloneWithType(QueryOrScanResponse);
+        QueryOrScanOutput response = check jsonResponse.cloneWithType(QueryOrScanOutput);
         self.scanRequest.exclusiveStartKey = response?.lastEvaluatedKey;
         map<AttributeValue>[]?? items = response?.items;
         if items is map<AttributeValue>[] {
@@ -190,7 +190,7 @@ class QueryStream {
                                                                         POST, self.uri, target, payload);
         json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
         convertJsonKeysToCamelCase(jsonResponse);
-        QueryOrScanResponse response = check jsonResponse.cloneWithType(QueryOrScanResponse);
+        QueryOrScanOutput response = check jsonResponse.cloneWithType(QueryOrScanOutput);
         self.queryRequest.exclusiveStartKey = response?.lastEvaluatedKey;
         map<AttributeValue>[]? items = response?.items;
         if items is map<AttributeValue>[] {
@@ -218,10 +218,10 @@ class ItemsBatchGetStream {
     private final string region;
     private final string awsHost;
     private final string uri = SLASH;
-    private GetBatchItemInput itemsBatchGetRequest;
+    private BatchItemGetInput itemsBatchGetRequest;
 
     isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region,
-            GetBatchItemInput itemsBatchGetRequest) returns error? {
+            BatchItemGetInput itemsBatchGetRequest) returns error? {
         self.httpClient = httpClient;
         self.accessKeyId = accessKey;
         self.secretAccessKey = secretKey;
@@ -257,7 +257,7 @@ class ItemsBatchGetStream {
                                                                         POST, self.uri, target, payload);
         json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
         convertJsonKeysToCamelCase(jsonResponse);
-        ItemsBatchGetResponse response = check jsonResponse.cloneWithType(ItemsBatchGetResponse);
+        BatchGetItemsOutput response = check jsonResponse.cloneWithType(BatchGetItemsOutput);
 
         self.itemsBatchGetRequest.requestItems = self.getRequestItemsToNextBatch(response);
         map<map<AttributeValue>[]>?? batchResponses = response?.responses;
@@ -290,7 +290,7 @@ class ItemsBatchGetStream {
         }
     }
     // Get RequestItem to construct request payload for the next batch
-    private isolated function getRequestItemsToNextBatch(ItemsBatchGetResponse itemsBatchGetResponse)
+    private isolated function getRequestItemsToNextBatch(BatchGetItemsOutput itemsBatchGetResponse)
                                                         returns map<KeysAndAttributes> {
         map<KeysAndAttributes>?? unprocessedKeys = itemsBatchGetResponse?.unprocessedKeys;
         return (unprocessedKeys is map<KeysAndAttributes> && unprocessedKeys !== {}) ?

@@ -73,7 +73,7 @@ public type LimitDescription record {
 };
 
 # Represents the response after `WriteBatchItem` operation.
-public type WriteBatchItemOutput record {
+public type BatchItemWriteOutput record {
     # The capacity units consumed by the entire `BatchWriteItem` operation
     ConsumedCapacity[]? consumedCapacity?;
     # A list of tables that were processed by `BatchWriteItem` and, for each table, information about
@@ -86,7 +86,7 @@ public type WriteBatchItemOutput record {
 };
 
 # Represents the request payload `BatchWriteItem` operation.
-public type WriteBatchItemInput record {|
+public type BatchItemInsertInput record {|
     # A map of one or more table names and, for each table, a list of operations to be performed
     # (DeleteRequest or PutRequest)
     map<WriteRequest[]> requestItems;
@@ -98,7 +98,7 @@ public type WriteBatchItemInput record {|
 |};
 
 # Represents the response after `BatchGetItem` operation, so the value can be provided directly to a subsequent `BatchGetItem` operation.
-public type ItemsBatchGetResponse record {
+type BatchGetItemsOutput record {
     # The read capacity units consumed by the entire BatchGetItem operation
     ConsumedCapacity[]? consumedCapacity?;
     # A map of table name to a list of items. Each object in Responses consists of a table name, along with a
@@ -121,7 +121,7 @@ public type BatchItem record {
 };
 
 # Represents the request payload for a `BatchGetItem` operation.
-public type GetBatchItemInput record {|
+public type BatchItemGetInput record {|
     # A map of one or more table names and, for each table, a map that describes one or more items to
     # retrieve from that table
     map<KeysAndAttributes> requestItems;
@@ -190,20 +190,11 @@ public type ScanOutput record {
     map<AttributeValue>? item?;
 };
 
-# Represents the response of Query or Scan operation.
-public type QueryOrScanResponse record {
-    # The capacity units consumed by the Scan operation
+type QueryOrScanOutput record {
     ConsumedCapacity? consumedCapacity?;
-    # The number of items in the response
     int? count?;
-    # An array of item attributes that match the scan criteria. Each element in this array consists of an
-    # attribute name and the value for that attribute
     map<AttributeValue>[]? items?;
-    # The primary key of the item where the operation stopped, inclusive of the previous result set.
-    # Use this value to start a new operation, excluding this value in the new request
     map<AttributeValue>? lastEvaluatedKey?;
-    # The number of items evaluated, before any ScanFilter or QueryFilter is applied. A high ScannedCount 
-    # value with few, or no, Count results indicates an ineﬃcient Scan or Query operation
     int? scannedCount?;
 };
 
@@ -252,7 +243,7 @@ public type QueryInput record {|
 |};
 
 # Represents the request payload to update an item.
-public type UpdateItemInput record {|
+public type ItemUpdateInput record {|
     # The primary key of the item to be updated. Each element consists of an attribute name and a value for that
     # attribute
     map<AttributeValue> 'key;
@@ -284,7 +275,7 @@ public type UpdateItemInput record {|
 |};
 
 # Represents the request payload to delete an item.
-public type DeleteItemInput record {|
+public type ItemDeleteInput record {|
     # A map of attribute names to AttributeValue objects, representing the primary key of the item to delete
     map<AttributeValue> 'key;
     # The name of the table from which to delete the item
@@ -310,7 +301,7 @@ public type DeleteItemInput record {|
 |};
 
 # Represents the response of `GetItem` operation.
-public type GetItemOutput record {
+public type ItemGetOutput record {
     # The capacity units consumed by the GetItem operation
     ConsumedCapacity? consumedCapacity?;
     # A map of attribute names to AttributeValue objects, as speciﬁed by ProjectionExpression
@@ -318,7 +309,7 @@ public type GetItemOutput record {
 };
 
 # Represents the request payload to get an Item.
-public type GetItemInput record {|
+public type ItemGetInput record {|
     # A map of attribute names to AttributeValue objects, representing the primary key of the item to retrieve
     map<AttributeValue> 'key;
     # The name of the table containing the requested item
@@ -349,7 +340,7 @@ public type ItemDescription record {
 };
 
 # Represents the request payload to put item.
-public type CreateItemInput record {|
+public type ItemCreateInput record {|
     # A map of attribute name/value pairs, one for each attribute. Only the primary key attributes are required;
     # you can optionally provide other attribute name-value pairs for the item
     map<AttributeValue> item;
@@ -376,7 +367,7 @@ public type CreateItemInput record {|
 |};
 
 # Represents the request payload to update table.
-public type UpdateTableInput record {|
+public type TableUpdateInput record {|
     # The name of the table to be updated
     string tableName;
     # An array of attributes that describe the key schema for the table and indexes. If you are
@@ -397,11 +388,8 @@ public type UpdateTableInput record {|
     StreamSpecification streamSpecification?;
 |};
 
-# Represents the request payload to list tables.
-public type TableListRequest record {
-    # The ﬁrst table name that this operation will evaluate
+type TableListRequest record {
     string? exclusiveStartTableName?;
-    # A maximum number of table names to return. If this parameter is not speciﬁed, the limit is 100
     int? 'limit?;
 };
 
@@ -416,7 +404,7 @@ public type TableList record {
 };
 
 # Represents the request payload to create table.
-public type CreateTableInput record {|
+public type TableCreateInput record {|
     # An array of attributes that describe the key schema for the table and indexes
     AttributeDefinition[] attributeDefinitions;
     # Speciﬁes the attributes that make up the primary key for a table or an index. The attributes in
@@ -953,7 +941,7 @@ public type WriteRequest record {
 };
 
 # Represents an request to perform a CreateBackup operation on a table.
-public type CreateBackupInput record {|
+public type BackupCreateInput record {|
     # Name for the backup
     string backupName;
     # Name of the table

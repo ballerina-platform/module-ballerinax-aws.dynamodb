@@ -42,7 +42,7 @@ The conforming implementation of the specification is released and included in t
        
 ## 1. [Overview](#1-overview)
 
-The Ballerina `dynamodb` library facilitates APIs to allow you to access the Amazon DynamoDB REST API. Amazon DynamoDB is a fully managed NoSQL database service that provides fast and predictable performance with seamless scalability. AmazonDynamoDB enables customers to offload the administrative burdens of operating and scaling distributed databases to AWS, so they do not have to worry about hardware provisioning, setup and configuration, replication, software patching, or cluster scaling.
+The Ballerina `dynamodb` library facilitates APIs to allow you to access the Amazon DynamoDB REST API. Amazon DynamoDB is a fully managed NoSQL database service that provides fast and predictable performance with seamless scalability. Amazon DynamoDB enables customers to offload the administrative burdens of operating and scaling distributed databases to AWS, so they do not have to worry about hardware provisioning, setup and configuration, replication, software patching, or cluster scaling.
 
 ## 2. [Client](#2-client)
 
@@ -83,12 +83,13 @@ Client dynamoDBClient = check new (config);
 This API can be used to create a new table in DynamoDB with the specified parameters.
 
 ```ballerina
-# Creates table in your account. The CreateTable operation adds a new table to your account. In # an AWS account, table names must be unique within each Region. That is, you can have two # tables with same name if you create the tables in diﬀerent Regions.
+# Creates a table. The CreateTable operation adds a new table to your account. In an AWS account, table names must be
+# unique within each Region. That is, you can have two tables with same name if you create the tables in diﬀerent
+# Regions.
 #
-#
-# + tableCreationRequest - The request payload to create a table
-# + return - If success, dynamodb:CreateTableOutput record, else an error
-remote isolated function createTable(CreateTableInput tableCreationRequest) returns TableDescription|error {
+# + tableCreationInput - The request payload to create a table
+# + return - If success, dynamodb:TableDescription record, else an error
+remote isolated function createTable(TableCreateInput tableCreationInput) returns TableDescription|error {
 ```
 
 #### [deleteTable](#deleteTable)
@@ -99,7 +100,7 @@ This API can be used to delete a table in DynamoDB with the given table name.
 # Deletes a table.
 #
 # + tableName - The name of the table to delete
-# + return - If success, dynamodb:DeleteTableOutput record, else an error
+# + return - If success, dynamodb:TableDescription record, else an error
 remote isolated function deleteTable(string tableName) returns TableDescription|error {
 ```
 
@@ -111,7 +112,7 @@ This API can be used to get the table details in DynamoDB with the given table n
 # Describes a table.
 #
 # + tableName - The name of the table to delete
-# + return - If success, dynamodb:DescribeTableOutput record, else an error
+# + return - If success, dynamodb:TableDescription record, else an error
 remote isolated function describeTable(string tableName) returns TableDescription|error {
 ```
 
@@ -133,9 +134,9 @@ This API can be used to update the entries in the table with the specified param
 ```ballerina
 # Updates a table.
 #
-# + tableUpdateRequest - The request payload to update a table 
-# + return - If success, dynamodb:UpdateTableOutput record, else an error
-remote isolated function updateTable(UpdateTableInput tableUpdateRequest) returns TableDescription|error {
+# + tableUpdateInput - The request payload to update a table 
+# + return - If success, dynamodb:TableDescription record, else an error
+remote isolated function updateTable(TableUpdateInput tableUpdateInput) returns TableDescription|error {
 ```
 
 #### [createItem](#createItem)
@@ -148,9 +149,9 @@ This API can be used to add a new item to the table.
 # conditional put operation (add a new item if one with the speciﬁed primary key doesn't exist), or replace an
 # existing item if it has certain attribute values.
 #
-# + request - The request payload to create an item
+# + itemCreateInput - The request payload to create an item
 # + return - If success, dynamodb:ItemDescription record, else an error
-remote isolated function createItem(CreateItemInput request) returns ItemDescription|error {
+remote isolated function createItem(ItemCreateInput itemCreateInput) returns ItemDescription|error {
 ```
 
 #### [getItem](#getItem)
@@ -160,9 +161,9 @@ This API can be used to get a specific item from the table.
 ```ballerina
 # Gets an item.
 #
-# + request - The request payload to get an item
+# + itemGetInput - The request payload to get an item
 # + return - If success, dynamodb:GetItemOutput record, else an error
-remote isolated function getItem(GetItemInput request) returns GetItemOutput|error {
+remote isolated function getItem(ItemGetInput itemGetInput) returns ItemGetOutput|error {
 ```
 
 #### [deleteItem](#deleteItem)
@@ -172,9 +173,9 @@ This API can be used to delete a specific item from the table.
 ```ballerina
 # Deletes an item.
 #
-# + request - The request payload to delete an item
+# + itemDeleteInput - The request payload to delete an item
 # + return - If success, dynamodb:ItemDescription record, else an error
-remote isolated function deleteItem(DeleteItemInput request) returns ItemDescription|error {
+remote isolated function deleteItem(ItemDeleteInput itemDeleteInput) returns ItemDescription|error {
 ```
 
 #### [updateItem](#updateItem)
@@ -184,9 +185,9 @@ This API can be used to update a specific item from the table.
 ```ballerina
 # Updates an item
 #
-# + request - The request payload to update an item
+# + itemUpdateInput - The request payload to update an item
 # + return - If success, dynamodb:ItemDescription record, else an error
-remote isolated function updateItem(UpdateItemInput request) returns ItemDescription|error {
+remote isolated function updateItem(ItemUpdateInput itemUpdateInput) returns ItemDescription|error {
 ```
 
 #### [query](#query)
@@ -198,9 +199,9 @@ This API can be used retrieve items from a table that match specific criteria.
 # and a single value for that attribute. Optionally, you can provide a sort key attribute and use a comparison
 # operator to reﬁne the search results.
 #
-# + request - The request payload to query
+# + queryInput - The request payload to query
 # + return - If success, stream<dynamodb:QueryOutput,error?>, else an error
-remote isolated function query(QueryInput request) returns stream<QueryOutput, error?>|error {
+remote isolated function query(QueryInput queryInput) returns stream<QueryOutput, error?>|error {
 ```
 
 #### [scan](#scan)
@@ -210,9 +211,9 @@ This API can be used to read all the items in a table and return them as a resul
 ```ballerina
 # Returns one or more items and item attributes by accessing every item in a table or a secondary index.
 #
-# + request - The request payload to scan
+# + scanInput - The request payload to scan
 # + return - If success, stream<dynamodb:ScanOutput,error?>, else an error
-remote isolated function scan(ScanInput request) returns stream<ScanOutput, error?>|error {
+remote isolated function scan(ScanInput scanInput) returns stream<ScanOutput, error?>|error {
 ```
 
 #### [getBatchItem](#getBatchItem)
@@ -222,9 +223,9 @@ This API can be used to retrieve multiple items from one or more tables in a sin
 ```ballerina
 # Returns the attributes of one or more items from one or more tables. You identify requested items by primary key.
 #
-# + request - The request payload to get items as batch
-# + return - If success, stream<dynamodb:ItemByBatchGet, error?>, else an error
-remote isolated function getBatchItem(GetBatchItemInput request) returns stream<BatchItem, error?>|error {
+# + batchItemGetInput - The request payload to get items as batch
+# + return - If success, stream<dynamodb:BatchItem, error?>, else an error
+remote isolated function getBatchItem(BatchItemGetInput batchItemGetInput) returns stream<BatchItem, error?>|error {
 ```
 
 #### [writeBatchItem](#writeBatchItem)
@@ -234,9 +235,9 @@ This API can be used to perform multiple write operations (PutItem, UpdateItem, 
 ```ballerina
 # Puts or deletes multiple items in one or more tables.
 #
-# + request - The request payload to write items as batch
-# + return - If success, dynamodb:BatchWriteItemOutput record, else an error
-remote isolated function batchWriteItem(BatchWriteItemInput request) returns BatchWriteItemOutput|error {
+# + batchItemInsertInput - The request payload to write items as batch
+# + return - If success, dynamodb:BatchItemWriteOutput record, else an error
+remote isolated function writeBatchItem(BatchItemInsertInput batchItemInsertInput) returns BatchItemWriteOutput|error {
 ```
 
 #### [describeLimits](#describeLimits)
@@ -258,9 +259,9 @@ This API can be used to manually create a backup for a table.
 ```ballerina
 # Creates a back up from the given table
 #
-# + request - The request payload to backup the table
+# + backupCreateInput - The request payload to backup the table
 # + return - If success, dynamodb:BackupDetails record, else an error
-remote isolated function createBackup(CreateBackupInput request) returns BackupDetails|error {
+remote isolated function createBackup(BackupCreateInput backupCreateInput) returns BackupDetails|error {
 ```
 
 #### [deleteBackup](#deleteBackup)
@@ -271,7 +272,7 @@ This API can be used to delete a backup of a table.
 # Deletes an existing backup of a table.
 #
 # + backupArn - The backupArn of the table that needs to be deleted
-# + return - If success, dynamodb:DeleteBackupOutput record, else an error
+# + return - If success, dynamodb:BackupDescription record, else an error
 remote isolated function deleteBackup(string backupArn) returns BackupDescription|error {
 ```
 
@@ -283,6 +284,6 @@ This API can be used to get the Time to Live status of a table.
 # The description of the Time to Live (TTL) status on the specified table.
 #
 # + tableName - Table name 
-# + return - If success, dynamodb:DescribeTimeToLiveOutput record, else an error
+# + return - If success, dynamodb:TTLDescription record, else an error
 remote isolated function getTTL(string tableName) returns TTLDescription|error {
 ```

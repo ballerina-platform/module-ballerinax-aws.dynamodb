@@ -12,7 +12,7 @@ public function main() returns error? {
     };
 
     dynamodb:Client amazonDynamodbClient = check new (amazonDynamodbConfig);
-    dynamodb:CreateTableInput createTableInput = {
+    dynamodb:TableCreateInput createTableInput = {
         tableName: "HighScores",
         attributeDefinitions: [
             {attributeName: "GameID", attributeType: "S"},
@@ -29,7 +29,7 @@ public function main() returns error? {
     };
     _ = check amazonDynamodbClient->createTable(createTableInput);
 
-    dynamodb:CreateItemInput createItemInput = {
+    dynamodb:ItemCreateInput createItemInput = {
         tableName: "HighScores",
         item: {
             "GameID": {"S": "FlappyBird"},
@@ -55,7 +55,7 @@ public function main() returns error? {
         io:println(resp?.item);
     });
 
-    dynamodb:UpdateItemInput updateItemInput = {
+    dynamodb:ItemUpdateInput updateItemInput = {
         tableName: "HighScores",
         'key: {
             "GameID": {"S": "FlappyBird"},
@@ -69,7 +69,7 @@ public function main() returns error? {
     dynamodb:ItemDescription updateItemResult = check amazonDynamodbClient->updateItem(updateItemInput);
     io:println("Updated the high score: ", updateItemResult);
 
-    dynamodb:DeleteItemInput deleteItemInput = {
+    dynamodb:ItemDeleteInput deleteItemInput = {
         tableName: "HighScores",
         'key: {
             "GameID": {"S": "FlappyBird"},
