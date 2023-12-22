@@ -357,7 +357,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "aws.dynamodb"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "http"},
