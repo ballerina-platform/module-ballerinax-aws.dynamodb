@@ -65,5 +65,4 @@ Config.toml
 
 # Java related ignores
 build/
-target/
 .gradle/
