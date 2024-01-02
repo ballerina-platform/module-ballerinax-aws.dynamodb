@@ -16,7 +16,7 @@
 import ballerina/crypto;
 import ballerina/jballerina.java;
 import ballerina/lang.array;
-import ballerina/regex;
+import ballerina/lang.regexp;
 import ballerina/time;
 import ballerina/url;
 
@@ -133,7 +133,8 @@ isolated function utcToString(time:Utc utc, string pattern) returns string|error
 
 isolated function getCanonicalURI(string requestURI) returns string|error {
     string value = check url:encode(requestURI, UTF_8);
-    return regex:replaceAll(value, ENCODED_SLASH, SLASH);
+    string:RegExp regex = re `%2F`;
+    return regexp:replaceAll(regex, value, SLASH, 0);
 }
 
 isolated function convertJsonKeysToCamelCase(json req) {
