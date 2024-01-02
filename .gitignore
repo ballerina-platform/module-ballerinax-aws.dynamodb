@@ -64,5 +64,5 @@ Config.toml
 *.env
 
 # Java related ignores
-**build/
+**/build/
 .gradle/
