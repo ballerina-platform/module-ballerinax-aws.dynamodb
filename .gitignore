@@ -62,3 +62,8 @@ Config.toml
 
 # docker files
 *.env
+
+# Java related ignores
+build/
+target/
+.gradle/
