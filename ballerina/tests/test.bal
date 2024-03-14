@@ -569,22 +569,3 @@ function testTimeToLive() returns error? {
     TTLDescription response = check dynamoDBClient->getTTL(mainTable);
     test:assertEquals(response.TimeToLiveStatus, "DISABLED");
 }
-
-// @test:Config {
-// }
-// function testDescribeTable1() returns error? {
-//     ItemCreateInput input = {
-
-//         Item: {
-
-//             "empId": {S: "testis12222"}
-
-//         },
-
-//         TableName: "Test"
-
-//     };
-//     TableDescription response = check dynamoDBClient->describeTable(mainTable);
-//     test:assertEquals(response?.TableName, mainTable, "Expected table is not described.");
-//     log:printInfo("Testing DescribeTable is completed.");
-// }
