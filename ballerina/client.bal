@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerinax/'client.config;
+import ballerina/io;
 
 # The Ballerina AWS DynamoDB connector provides the capability to access AWS Simple Email Service related operations.
 # This connector lets you to to send email messages to your customers.
@@ -58,13 +59,11 @@ public isolated client class Client {
     remote isolated function createTable(TableCreateInput tableCreationInput) returns TableDescription|error {
         string target = VERSION + DOT + "CreateTable";
         json payload = check tableCreationInput.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         map<json> response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
-        json tableDescription = check response.tableDescription;
+        json tableDescription = check response.TableDescription;
         return tableDescription.cloneWithType(TableDescription);
     }
 
@@ -82,8 +81,7 @@ public isolated client class Client {
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
-        json tableDescription = check response.tableDescription;
+        json tableDescription = check response.TableDescription;
         return tableDescription.cloneWithType(TableDescription);
     }
 
@@ -101,8 +99,7 @@ public isolated client class Client {
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
-        json 'table = check response.'table;
+        json 'table = check response.Table;
         return 'table.cloneWithType(TableDescription);
     }
 
@@ -123,13 +120,11 @@ public isolated client class Client {
     remote isolated function updateTable(TableUpdateInput tableUpdateInput) returns TableDescription|error {
         string target = VERSION + DOT + "UpdateTable";
         json payload = check tableUpdateInput.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
-        json tableDescription = check response.tableDescription;
+        json tableDescription = check response.TableDescription;
         return tableDescription.cloneWithType(TableDescription);
     }
 
@@ -143,12 +138,11 @@ public isolated client class Client {
     remote isolated function createItem(ItemCreateInput itemCreateInput) returns ItemDescription|error {
         string target = VERSION + DOT + "PutItem";
         json payload = check itemCreateInput.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
+        io:println(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
         return response.cloneWithType(ItemDescription);
     }
 
@@ -159,12 +153,10 @@ public isolated client class Client {
     remote isolated function getItem(ItemGetInput itemGetInput) returns ItemGetOutput|error {
         string target = VERSION + DOT + "GetItem";
         json payload = check itemGetInput.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
         return response.cloneWithType(ItemGetOutput);
     }
 
@@ -175,7 +167,6 @@ public isolated client class Client {
     remote isolated function deleteItem(ItemDeleteInput itemDeleteInput) returns ItemDescription|error {
         string target = VERSION + DOT + "DeleteItem";
         json payload = check itemDeleteInput.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
@@ -190,12 +181,10 @@ public isolated client class Client {
     remote isolated function updateItem(ItemUpdateInput itemUpdateInput) returns ItemDescription|error {
         string target = VERSION + DOT + "UpdateItem";
         json payload = check itemUpdateInput.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
         return response.cloneWithType(ItemDescription);
     }
 
@@ -244,12 +233,10 @@ public isolated client class Client {
     remote isolated function writeBatchItems(BatchItemInsertInput batchItemInsertInput) returns BatchItemInsertOutput|error {
         string target = VERSION + DOT + "BatchWriteItem";
         json payload = check batchItemInsertInput.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
         return response.cloneWithType(BatchItemInsertOutput);
     }
 
@@ -264,7 +251,6 @@ public isolated client class Client {
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
         return response.cloneWithType(LimitDescription);
     }
 
@@ -275,13 +261,11 @@ public isolated client class Client {
     remote isolated function createBackup(BackupCreateInput backupCreateInput) returns BackupDetails|error {
         string target = VERSION + DOT + "CreateBackup";
         json payload = check backupCreateInput.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
-        json backUpDetails = check response.backupDetails;
+        json backUpDetails = check response.BackupDetails;
         return backUpDetails.cloneWithType(BackupDetails);
     }
 
@@ -298,8 +282,7 @@ public isolated client class Client {
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
-        json backUpDetails = check response.backupDescription;
+        json backUpDetails = check response.BackupDescription;
         return backUpDetails.cloneWithType(BackupDescription);
     }
 
@@ -316,8 +299,7 @@ public isolated client class Client {
                                                                     self.secretAccessKey, self.region,
                                                                     POST, self.uri, target, payload);
         json timeToLiveResponse = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(timeToLiveResponse);
-        json timeToLiveDescription = check timeToLiveResponse.timeToLiveDescription;
+        json timeToLiveDescription = check timeToLiveResponse.TimeToLiveDescription;
         return timeToLiveDescription.cloneWithType(TTLDescription);
     }
 }

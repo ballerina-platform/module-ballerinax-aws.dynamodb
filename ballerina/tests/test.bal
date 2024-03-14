@@ -40,66 +40,66 @@ Client dynamoDBClient = check new (config);
 @test:Config {}
 function testCreateTable() returns error? {
     TableCreateInput payload = {
-        attributeDefinitions: [
+        AttributeDefinitions: [
             {
-                attributeName: "ForumName",
-                attributeType: "S"
+                AttributeName: "ForumName",
+                AttributeType: "S"
             },
             {
-                attributeName: "Subject",
-                attributeType: "S"
+                AttributeName: "Subject",
+                AttributeType: "S"
             },
             {
-                attributeName: "LastPostDateTime",
-                attributeType: "S"
+                AttributeName: "LastPostDateTime",
+                AttributeType: "S"
             }
         ],
-        tableName: mainTable,
-        keySchema: [
+        TableName: mainTable,
+        KeySchema: [
             {
-                attributeName: "ForumName",
-                keyType: HASH
+                AttributeName: "ForumName",
+                KeyType: HASH
             },
             {
-                attributeName: "Subject",
-                keyType: RANGE
+                AttributeName: "Subject",
+                KeyType: RANGE
             }
         ],
-        localSecondaryIndexes: [
+        LocalSecondaryIndexes: [
             {
-                indexName: "LastPostIndex",
-                keySchema: [
+                IndexName: "LastPostIndex",
+                KeySchema: [
                     {
-                        attributeName: "ForumName",
-                        keyType: HASH
+                        AttributeName: "ForumName",
+                        KeyType: HASH
                     },
                     {
-                        attributeName: "LastPostDateTime",
-                        keyType: RANGE
+                        AttributeName: "LastPostDateTime",
+                        KeyType: RANGE
                     }
                 ],
-                projection: {
-                    projectionType: KEYS_ONLY
+                Projection: {
+                    ProjectionType: KEYS_ONLY
                 }
             }
         ],
-        provisionedThroughput: {
-            readCapacityUnits: 5,
-            writeCapacityUnits: 5
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5
         },
-        tags: [
+        Tags: [
             {
-                key: "Owner",
-                value: "BlueTeam"
+                Key: "Owner",
+                Value: "BlueTeam"
             }
         ]
     };
     TableDescription createTablesResult = check dynamoDBClient->createTable(payload);
-    test:assertEquals(createTablesResult?.tableName, mainTable, "Thread table is not created.");
-    test:assertEquals(createTablesResult?.tableStatus, CREATING, "Table is not created.");
-    payload.tableName = secondaryTable;
+    test:assertEquals(createTablesResult?.TableName, mainTable, "Thread table is not created.");
+    test:assertEquals(createTablesResult?.TableStatus, CREATING, "Table is not created.");
+    payload.TableName = secondaryTable;
     createTablesResult = check dynamoDBClient->createTable(payload);
-    test:assertEquals(createTablesResult?.tableName, secondaryTable,
+    test:assertEquals(createTablesResult?.TableName, secondaryTable,
                     "SecondaryThread table is not created.");
     log:printInfo("Testing CreateTable is completed.");
 }
@@ -109,7 +109,7 @@ function testCreateTable() returns error? {
 }
 function testDescribeTable() returns error? {
     TableDescription response = check dynamoDBClient->describeTable(mainTable);
-    test:assertEquals(response?.tableName, mainTable, "Expected table is not described.");
+    test:assertEquals(response?.TableName, mainTable, "Expected table is not described.");
     log:printInfo("Testing DescribeTable is completed.");
 }
 
@@ -122,17 +122,17 @@ function updateTable() returns error? {
 
 function testUpdateTable() returns error? {
     TableUpdateInput request = {
-        tableName: mainTable,
-        provisionedThroughput: {
-            readCapacityUnits: 10,
-            writeCapacityUnits: 10
+        TableName: mainTable,
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 10,
+            WriteCapacityUnits: 10
         }
     };
     TableDescription response = check dynamoDBClient->updateTable(request);
-    ProvisionedThroughputDescription? provisionedThroughput = response?.provisionedThroughput;
+    ProvisionedThroughputDescription? provisionedThroughput = response?.ProvisionedThroughput;
     if provisionedThroughput !is () {
-        test:assertEquals(provisionedThroughput?.readCapacityUnits, 5, "Read Capacity Units are not updated in table.");
-        test:assertEquals(provisionedThroughput?.writeCapacityUnits, 5, "Write Capacity Units are not updated in table.");
+        test:assertEquals(provisionedThroughput?.ReadCapacityUnits, 5, "Read Capacity Units are not updated in table.");
+        test:assertEquals(provisionedThroughput?.WriteCapacityUnits, 5, "Write Capacity Units are not updated in table.");
     }
     log:printInfo("Testing UpdateTable is completed.");
 }
@@ -154,8 +154,8 @@ function testListTables() returns error? {
 }
 function testPutItem() returns error? {
     ItemCreateInput request = {
-        tableName: mainTable,
-        item: {
+        TableName: mainTable,
+    Item: {
             "LastPostDateTime": {
                 "S": "201303190422"
             },
@@ -179,11 +179,11 @@ function testPutItem() returns error? {
                 "S": "fred@example.com"
             }
         },
-        conditionExpression: "ForumName <> :f and Subject <> :s",
-        returnValues: ALL_OLD,
-        returnItemCollectionMetrics: SIZE,
-        returnConsumedCapacity: TOTAL,
-        expressionAttributeValues: {
+        ConditionExpression: "ForumName <> :f and Subject <> :s",
+        ReturnValues: ALL_OLD,
+        ReturnItemCollectionMetrics: SIZE,
+        ReturnConsumedCapacity: TOTAL,
+        ExpressionAttributeValues: {
             ":f": {
                 "S": "Amazon DynamoDB"
             },
@@ -203,8 +203,8 @@ function testPutItem() returns error? {
 }
 function testGetItem() returns error? {
     ItemGetInput request = {
-        tableName: mainTable,
-        'key: {
+        TableName: mainTable,
+        Key: {
             "ForumName": {
                 "S": "Amazon DynamoDB"
             },
@@ -212,12 +212,12 @@ function testGetItem() returns error? {
                 "S": "How do I update multiple items?"
             }
         },
-        projectionExpression: "LastPostDateTime, Message, Tags",
-        consistentRead: true,
-        returnConsumedCapacity: TOTAL
+        ProjectionExpression: "LastPostDateTime, Message, Tags",
+        ConsistentRead: true,
+        ReturnConsumedCapacity: TOTAL
     };
     ItemGetOutput response = check dynamoDBClient->getItem(request);
-    log:printInfo(response?.item.toString());
+    log:printInfo(response?.Item.toString());
     log:printInfo("Testing GetItem is completed.");
 }
 
@@ -226,8 +226,8 @@ function testGetItem() returns error? {
 }
 function testUpdateItem() returns error? {
     ItemUpdateInput request = {
-        tableName: mainTable,
-        'key: {
+        TableName: mainTable,
+        Key: {
             "ForumName": {
                 "S": "Amazon DynamoDB"
             },
@@ -235,9 +235,9 @@ function testUpdateItem() returns error? {
                 "S": "How do I update multiple items?"
             }
         },
-        updateExpression: "set LastPostedBy = :val1",
-        conditionExpression: "LastPostedBy = :val2",
-        expressionAttributeValues: {
+        UpdateExpression: "set LastPostedBy = :val1",
+        ConditionExpression: "LastPostedBy = :val2",
+        ExpressionAttributeValues: {
             ":val1": {
                 "S": "alice@example.com"
             },
@@ -245,9 +245,9 @@ function testUpdateItem() returns error? {
                 "S": "fred@example.com"
             }
         },
-        returnValues: ALL_NEW,
-        returnConsumedCapacity: TOTAL,
-        returnItemCollectionMetrics: SIZE
+        ReturnValues: ALL_NEW,
+        ReturnConsumedCapacity: TOTAL,
+        ReturnItemCollectionMetrics: SIZE
     };
     ItemDescription response = check dynamoDBClient->updateItem(request);
     log:printInfo(response.toString());
@@ -259,14 +259,14 @@ function testUpdateItem() returns error? {
 }
 function testQuery() returns error? {
     QueryInput request = {
-        tableName: mainTable,
-        consistentRead: true,
-        keyConditionExpression: "ForumName = :val",
-        expressionAttributeValues: {":val": {"S": "Amazon DynamoDB"}}
+        TableName: mainTable,
+        ConsistentRead: true,
+        KeyConditionExpression: "ForumName = :val",
+        ExpressionAttributeValues: {":val": {"S": "Amazon DynamoDB"}}
     };
     stream<QueryOutput, error?> response = check dynamoDBClient->query(request);
     check response.forEach(function(QueryOutput resp) {
-        test:assertTrue(resp?.item is map<AttributeValue>);
+        test:assertTrue(resp?.Item is map<AttributeValue>);
     });
     log:printInfo("Testing Query is completed.");
 }
@@ -276,15 +276,15 @@ function testQuery() returns error? {
 }
 function testScan() returns error? {
     ScanInput request = {
-        tableName: mainTable,
-        filterExpression: "LastPostedBy = :val",
-        expressionAttributeValues: {":val": {"S": "alice@example.com"}},
-        returnConsumedCapacity: TOTAL
+        TableName: mainTable,
+        FilterExpression: "LastPostedBy = :val",
+        ExpressionAttributeValues: {":val": {"S": "alice@example.com"}},
+        ReturnConsumedCapacity: TOTAL
     };
 
     stream<ScanOutput, error?> response = check dynamoDBClient->scan(request);
     check response.forEach(function(ScanOutput resp) {
-        test:assertTrue(resp?.item is map<AttributeValue>);
+        test:assertTrue(resp?.Item is map<AttributeValue>);
     });
     log:printInfo("Testing Scan is completed.");
 }
@@ -294,11 +294,11 @@ function testScan() returns error? {
 }
 function testWriteBatchItems() returns error? {
     BatchItemInsertInput request = {
-        requestItems: {
+        RequestItems: {
             [secondaryTable]: [
                 {
-                    putRequest: {
-                        item: {
+                    PutRequest: {
+                        Item: {
                             "LastPostDateTime": {
                                 "S": "201303190423"
                             },
@@ -325,8 +325,8 @@ function testWriteBatchItems() returns error? {
                     }
                 },
                 {
-                    putRequest: {
-                        item: {
+                    PutRequest: {
+                        Item: {
                             "LastPostDateTime": {
                                 "S": "201303190423"
                             },
@@ -353,8 +353,8 @@ function testWriteBatchItems() returns error? {
                     }
                 },
                 {
-                    putRequest: {
-                        item: {
+                    PutRequest: {
+                        Item: {
                             "LastPostDateTime": {
                                 "S": "201303190423"
                             },
@@ -381,8 +381,8 @@ function testWriteBatchItems() returns error? {
                     }
                 },
                 {
-                    putRequest: {
-                        item: {
+                    PutRequest: {
+                        Item: {
                             "LastPostDateTime": {
                                 "S": "201303190423"
                             },
@@ -410,7 +410,7 @@ function testWriteBatchItems() returns error? {
                 }
             ]
         },
-        returnConsumedCapacity: TOTAL
+        ReturnConsumedCapacity: TOTAL
     };
 
     io:println(request.toString());
@@ -425,32 +425,32 @@ function testWriteBatchItems() returns error? {
 }
 function testGetBatchItems() returns error? {
     BatchItemGetInput request = {
-        requestItems: {
+        RequestItems: {
             [mainTable]: {
-                keys: [
+                Keys: [
                     {
                         "ForumName": {"S": "Amazon DynamoDB"},
                         "Subject": {"S": "How do I update multiple items?"}
                     }
                 ],
-                projectionExpression: "ForumName, Message"
+                ProjectionExpression: "ForumName, Message"
             },
             [secondaryTable]: {
-                keys: [
+                Keys: [
                     {
                         "ForumName": {"S": "Amazon S3"},
                         "Subject": {"S": "How do I update multiple items?"}
                     }
                 ],
-                projectionExpression: "ForumName, Message, LastPostedBy"
+                ProjectionExpression: "ForumName, Message, LastPostedBy"
             }
         },
-        returnConsumedCapacity: TOTAL
+        ReturnConsumedCapacity: TOTAL
     };
 
     stream<BatchItem, error?> response = check dynamoDBClient->getBatchItems(request);
     check response.forEach(function(BatchItem item) {
-        log:printInfo(item?.item.toString());
+        log:printInfo(item?.Item.toString());
     });
     log:printInfo("Testing BatchGetItem is completed.");
 }
@@ -460,8 +460,8 @@ function testGetBatchItems() returns error? {
 }
 function testDeleteItem() returns error? {
     ItemDeleteInput request = {
-        tableName: mainTable,
-        'key: {
+        TableName: mainTable,
+        Key: {
             "ForumName": {
                 "S": "Amazon DynamoDB"
             },
@@ -469,9 +469,9 @@ function testDeleteItem() returns error? {
                 "S": "How do I update multiple items?"
             }
         },
-        returnConsumedCapacity: TOTAL,
-        returnItemCollectionMetrics: SIZE,
-        returnValues: ALL_OLD
+        ReturnConsumedCapacity: TOTAL,
+        ReturnItemCollectionMetrics: SIZE,
+        ReturnValues: ALL_OLD
     };
     ItemDescription response = check dynamoDBClient->deleteItem(request);
     log:printInfo(response.toString());
@@ -481,13 +481,13 @@ function testDeleteItem() returns error? {
 @test:Config {}
 function testDescribeLimits() returns error? {
     LimitDescription response = check dynamoDBClient->describeLimits();
-    test:assertTrue(response?.accountMaxReadCapacityUnits is int, "AccountMaxReadCapacityUnits in DescribeLimits is " +
+    test:assertTrue(response?.AccountMaxReadCapacityUnits is int, "AccountMaxReadCapacityUnits in DescribeLimits is " +
                     "not an integer.");
-    test:assertTrue(response?.accountMaxWriteCapacityUnits is int, "AccountMaxWriteCapacityUnits in DescribeLimits is " +
+    test:assertTrue(response?.AccountMaxWriteCapacityUnits is int, "AccountMaxWriteCapacityUnits in DescribeLimits is " +
                     "not an integer.");
-    test:assertTrue(response?.tableMaxReadCapacityUnits is int, "TableMaxReadCapacityUnits in DescribeLimits is " +
+    test:assertTrue(response?.TableMaxReadCapacityUnits is int, "TableMaxReadCapacityUnits in DescribeLimits is " +
                     "not an integer.");
-    test:assertTrue(response?.tableMaxWriteCapacityUnits is int, "TableMaxWriteCapacityUnits in DescribeLimits is " +
+    test:assertTrue(response?.TableMaxWriteCapacityUnits is int, "TableMaxWriteCapacityUnits in DescribeLimits is " +
                     "not an integer.");
     log:printInfo("Testing DescribeLimits is completed.");
 }
@@ -500,10 +500,10 @@ function deleteTables() returns error? {
 function testDeleteTable() returns error? {
     TableDescription response = check dynamoDBClient->deleteTable(mainTable);
     log:printInfo(response.toString());
-    test:assertEquals(response?.tableName, mainTable, "Expected table is not deleted.");
+    test:assertEquals(response?.TableName, mainTable, "Expected table is not deleted.");
     response = check dynamoDBClient->deleteTable(secondaryTable);
     log:printInfo(response.toString());
-    test:assertEquals(response?.tableName, secondaryTable, "Expected table is not deleted.");
+    test:assertEquals(response?.TableName, secondaryTable, "Expected table is not deleted.");
     log:printInfo("Testing DeleteTable is completed.");
 }
 
@@ -552,14 +552,14 @@ function executeWithRetry(function () returns error? testFunc, decimal delayBetw
 }
 function testCreateBackupAndDeleteBackup() returns error? {
     BackupCreateInput backupRequest = {
-        tableName: mainTable,
-        backupName: "ThreadBackup"
+        TableName: mainTable,
+        BackupName: "ThreadBackup"
     };
     BackupDetails response = check dynamoDBClient->createBackup(backupRequest);
-    test:assertEquals(response.backupName, "ThreadBackup");
-    string backupArn = response.backupArn;
+    test:assertEquals(response.BackupName, "ThreadBackup");
+    string backupArn = response.BackupArn;
     BackupDescription backupDescription = check dynamoDBClient->deleteBackup(backupArn);
-    test:assertEquals(backupDescription.backupDetails?.backupName, "ThreadBackup");
+    test:assertEquals(backupDescription.BackupDetails?.BackupName, "ThreadBackup");
 }
 
 @test:Config {
@@ -567,5 +567,24 @@ function testCreateBackupAndDeleteBackup() returns error? {
 }
 function testTimeToLive() returns error? {
     TTLDescription response = check dynamoDBClient->getTTL(mainTable);
-    test:assertEquals(response.timeToLiveStatus, "DISABLED");
+    test:assertEquals(response.TimeToLiveStatus, "DISABLED");
 }
+
+// @test:Config {
+// }
+// function testDescribeTable1() returns error? {
+//     ItemCreateInput input = {
+
+//         Item: {
+
+//             "empId": {S: "testis12222"}
+
+//         },
+
+//         TableName: "Test"
+
+//     };
+//     TableDescription response = check dynamoDBClient->describeTable(mainTable);
+//     test:assertEquals(response?.TableName, mainTable, "Expected table is not described.");
+//     log:printInfo("Testing DescribeTable is completed.");
+// }
