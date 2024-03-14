@@ -19,32 +19,6 @@ import ballerina/lang.array;
 import ballerina/time;
 import ballerina/url;
 
-isolated map<string> requestDataBindingMap = {
-    "sseSpecification": "SSESpecification",
-    "kmsMasterKeyId": "KMSMasterKeyId",
-    "sseType": "SSEType",
-    "kmsMasterKeyArn": "KMSMasterKeyArn",
-    "sseDescription": "SSEDescription",
-    "bool": "BOOL",
-    "bs": "BS",
-    "ns": "NS",
-    "null": "NULL",
-    "ss": "SS"
-};
-
-isolated map<string> responseDataBindingMap = {
-    "SSESpecification": "sseSpecification",
-    "KMSMasterKeyId": "kmsMasterKeyId",
-    "SSEType": "sseType",
-    "KMSMasterKeyArn": "kmsMasterKeyArn",
-    "SSEDescription": "sseDescription",
-    "BOOL": "bool",
-    "BS": "bs",
-    "NS": "ns",
-    "NULL": "null",
-    "SS": "ss"
-};
-
 # Represents any error related to the dynamodb module.
 public type Error distinct error;
 
@@ -133,70 +107,4 @@ isolated function utcToString(time:Utc utc, string pattern) returns string|error
 isolated function getCanonicalURI(string requestURI) returns string|error {
     string value = check url:encode(requestURI, UTF_8);
     return re `%2F`.replaceAll(value, SLASH, 0);
-}
-
-isolated function convertJsonKeysToCamelCase(json req) {
-    map<json> mapValue = <map<json>>req;
-    foreach var [key, value] in mapValue.entries() {
-        string converted = lowercaseFirstLetter(key);
-        if converted != key {
-            any|error removeResult = mapValue.remove(key);
-            mapValue[converted] = value;
-        }
-        if value is json[] {
-            json[] innerJson = <json[]>mapValue[converted];
-            foreach var item in innerJson {
-                // assume no arrays inside array
-                if item is map<json> {
-                    convertJsonKeysToCamelCase(item);
-                }
-            }
-        } else if value is map<json> {
-            convertJsonKeysToCamelCase(value);
-        }
-    }
-}
-
-isolated function convertJsonKeysToUpperCase(json req) {
-    map<json> mapValue = <map<json>>req;
-    foreach var [key, value] in mapValue.entries() {
-        string converted = uppercaseFirstLetter(key);
-        if converted != key {
-            any|error removeResult = mapValue.remove(key);
-            mapValue[converted] = value;
-        }
-        if value is json[] {
-            json[] innerJson = <json[]>mapValue[converted];
-            foreach var item in innerJson {
-                // assume no arrays inside array
-                if item is map<json> {
-                    convertJsonKeysToUpperCase(item);
-                }
-            }
-        } else if value is map<json> {
-            convertJsonKeysToUpperCase(value);
-        }
-    }
-}
-
-isolated function uppercaseFirstLetter(string str) returns string {
-    lock {
-        if requestDataBindingMap.hasKey(str) {
-            return <string>requestDataBindingMap[str];
-        }
-    }
-    string firstLetter = str.substring(0, 1);
-    string remainingLetters = str.substring(1);
-    return firstLetter.toUpperAscii() + remainingLetters;
-}
-
-isolated function lowercaseFirstLetter(string str) returns string {
-    lock {
-        if responseDataBindingMap.hasKey(str) {
-            return <string>responseDataBindingMap[str];
-        }
-    }
-    string firstLetter = str.substring(0, 1);
-    string remainingLetters = str.substring(1);
-    return firstLetter.toLowerAscii() + remainingLetters;
 }

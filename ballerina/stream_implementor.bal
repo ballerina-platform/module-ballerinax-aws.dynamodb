@@ -56,18 +56,16 @@ class TableStream {
     isolated function fetchTableNames() returns string[]|error {
         string target = VERSION + DOT + "ListTables";
         TableListRequest request = {
-            exclusiveStartTableName: self.exclusiveStartTableName
+            ExclusiveStartTableName: self.exclusiveStartTableName
         };
         json payload = check request.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(response);
         TableList tableListResp = check response.cloneWithType(TableList);
-        self.exclusiveStartTableName = tableListResp?.lastEvaluatedTableName;
-        string[]? tableList = tableListResp?.tableNames;
+        self.exclusiveStartTableName = tableListResp?.LastEvaluatedTableName;
+        string[]? tableList = tableListResp?.TableNames;
         if tableList is string[] {
             return tableList;
         }
@@ -103,7 +101,7 @@ class ScanStream {
             self.index += 1;
             return response;
         }
-        if self.scanRequest?.exclusiveStartKey is map<AttributeValue> {
+        if self.scanRequest?.ExclusiveStartKey is map<AttributeValue> {
             self.index = 0;
             self.currentEntries = check self.fetchScan();
             if self.index < self.currentEntries.length() {
@@ -117,21 +115,19 @@ class ScanStream {
     isolated function fetchScan() returns ScanOutput[]|error {
         string target = VERSION + DOT + "Scan";
         json payload = check self.scanRequest.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(jsonResponse);
         QueryOrScanOutput response = check jsonResponse.cloneWithType(QueryOrScanOutput);
-        self.scanRequest.exclusiveStartKey = response?.lastEvaluatedKey;
-        map<AttributeValue>[]?? items = response?.items;
+        self.scanRequest.ExclusiveStartKey = response?.LastEvaluatedKey;
+        map<AttributeValue>[]?? items = response?.Items;
         if items is map<AttributeValue>[] {
             ScanOutput[] scanResponseArr = [];
             foreach map<AttributeValue> item in items {
                 ScanOutput scanResponse = {
-                    consumedCapacity: response?.consumedCapacity,
-                    item: item
+                    ConsumedCapacity: response?.ConsumedCapacity,
+                    Item: item
                 };
                 scanResponseArr.push(scanResponse);
             }
@@ -170,7 +166,7 @@ class QueryStream {
             self.index += 1;
             return response;
         }
-        if self.queryRequest?.exclusiveStartKey is map<AttributeValue> {
+        if self.queryRequest?.ExclusiveStartKey is map<AttributeValue> {
             self.index = 0;
             self.currentEntries = check self.fetchQuery();
             if self.index < self.currentEntries.length() {
@@ -184,21 +180,19 @@ class QueryStream {
     isolated function fetchQuery() returns QueryOutput[]|error {
         string target = VERSION + DOT + "Query";
         json payload = check self.queryRequest.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(jsonResponse);
         QueryOrScanOutput response = check jsonResponse.cloneWithType(QueryOrScanOutput);
-        self.queryRequest.exclusiveStartKey = response?.lastEvaluatedKey;
-        map<AttributeValue>[]? items = response?.items;
+        self.queryRequest.ExclusiveStartKey = response?.LastEvaluatedKey;
+        map<AttributeValue>[]? items = response?.Items;
         if items is map<AttributeValue>[] {
             QueryOutput[] queryResponseArr = [];
             foreach map<AttributeValue> item in items {
                 QueryOutput queryResponse = {
-                    consumedCapacity: response?.consumedCapacity,
-                    item: item
+                    ConsumedCapacity: response?.ConsumedCapacity,
+                    Item: item
                 };
                 queryResponseArr.push(queryResponse);
             }
@@ -237,7 +231,7 @@ class ItemsBatchGetStream {
             self.index += 1;
             return response;
         }
-        if self.itemsBatchGetRequest.requestItems.keys().length() != 0 {
+        if self.itemsBatchGetRequest.RequestItems.keys().length() != 0 {
             self.index = 0;
             self.currentEntries = check self.fetchBatchItems();
             if self.index < self.currentEntries.length() {
@@ -251,21 +245,19 @@ class ItemsBatchGetStream {
     isolated function fetchBatchItems() returns BatchItem[]|error {
         string target = VERSION + DOT + "BatchGetItem";
         json payload = check self.itemsBatchGetRequest.cloneWithType(json);
-        convertJsonKeysToUpperCase(payload);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
-        convertJsonKeysToCamelCase(jsonResponse);
         BatchGetItemsOutput response = check jsonResponse.cloneWithType(BatchGetItemsOutput);
 
-        self.itemsBatchGetRequest.requestItems = self.getRequestItemsToNextBatch(response);
-        map<map<AttributeValue>[]>?? batchResponses = response?.responses;
-        ConsumedCapacity[]?? consumedCapacities = response?.consumedCapacity;
+        self.itemsBatchGetRequest.RequestItems = self.getRequestItemsToNextBatch(response);
+        map<map<AttributeValue>[]>?? batchResponses = response?.Responses;
+        ConsumedCapacity[]?? consumedCapacities = response?.ConsumedCapacity;
         map<ConsumedCapacity> consumedCapacityMap = {};
         if consumedCapacities is ConsumedCapacity[] {
             foreach ConsumedCapacity consumedCapacity in consumedCapacities {
-                consumedCapacityMap[consumedCapacity?.tableName.toString()] = consumedCapacity;
+                consumedCapacityMap[consumedCapacity?.TableName.toString()] = consumedCapacity;
             }
         }
         if batchResponses is map<map<AttributeValue>[]> {
@@ -277,9 +269,9 @@ class ItemsBatchGetStream {
                     consumedCapacityMap.get(keyName) : ();
                 foreach map<AttributeValue> item in items {
                     BatchItem itemResponse = {
-                        consumedCapacity: consumedCapacity,
-                        tableName: keyName,
-                        item: item
+                        ConsumedCapacity: consumedCapacity,
+                        TableName: keyName,
+                        Item: item
                     };
                     itemResponseArr.push(itemResponse);
                 }
@@ -292,7 +284,7 @@ class ItemsBatchGetStream {
     // Get RequestItem to construct request payload for the next batch
     private isolated function getRequestItemsToNextBatch(BatchGetItemsOutput itemsBatchGetResponse)
                                                         returns map<KeysAndAttributes> {
-        map<KeysAndAttributes>?? unprocessedKeys = itemsBatchGetResponse?.unprocessedKeys;
+        map<KeysAndAttributes>?? unprocessedKeys = itemsBatchGetResponse?.UnprocessedKeys;
         return (unprocessedKeys is map<KeysAndAttributes> && unprocessedKeys !== {}) ?
             <map<KeysAndAttributes>>unprocessedKeys : {};
     }
