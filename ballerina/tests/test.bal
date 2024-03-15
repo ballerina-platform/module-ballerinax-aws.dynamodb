@@ -155,7 +155,7 @@ function testListTables() returns error? {
 function testPutItem() returns error? {
     ItemCreateInput request = {
         TableName: mainTable,
-    Item: {
+        Item: {
             "LastPostDateTime": {
                 "S": "201303190422"
             },
