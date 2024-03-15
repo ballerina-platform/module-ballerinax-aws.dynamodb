@@ -29,25 +29,25 @@ public function main() returns error? {
 
     dynamodb:Client amazonDynamodbClient = check new (amazonDynamodbConfig);
     dynamodb:TableCreateInput createTableInput = {
-        tableName: "HighScores",
-        attributeDefinitions: [
-            {attributeName: "GameID", attributeType: "S"},
-            {attributeName: "Score", attributeType: "N"}
+        TableName: "HighScores",
+        AttributeDefinitions: [
+            {AttributeName: "GameID", AttributeType: "S"},
+            {AttributeName: "Score", AttributeType: "N"}
         ],
-        keySchema: [
-            {attributeName: "GameID", keyType: "HASH"},
-            {attributeName: "Score", keyType: "RANGE"}
+        KeySchema: [
+            {AttributeName: "GameID", KeyType: "HASH"},
+            {AttributeName: "Score", KeyType: "RANGE"}
         ],
-        provisionedThroughput: {
-            readCapacityUnits: 5,
-            writeCapacityUnits: 5
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5
         }
     };
     _ = check amazonDynamodbClient->createTable(createTableInput);
 
     dynamodb:ItemCreateInput createItemInput = {
-        tableName: "HighScores",
-        item: {
+        TableName: "HighScores",
+        Item: {
             "GameID": {"S": "FlappyBird"},
             "Score": {"N": "500"},
             "PlayerName": {"S": "JohnDoe"}
@@ -57,28 +57,28 @@ public function main() returns error? {
     io:println("Added item: ", createItemResult);
 
     dynamodb:QueryInput queryInput = {
-        tableName: "HighScores",
-        keyConditionExpression: "GameID = :game",
-        expressionAttributeValues: {
+        TableName: "HighScores",
+        KeyConditionExpression: "GameID = :game",
+        ExpressionAttributeValues: {
             ":game": {"S": "FlappyBird"}
         },
-        'limit: 10,
-        scanIndexForward: false
+        Limit: 10,
+        ScanIndexForward: false
     };
 
     stream<dynamodb:QueryOutput, error?> response = check amazonDynamodbClient->query(queryInput);
     check response.forEach(function(dynamodb:QueryOutput resp) {
-        io:println(resp?.item);
+        io:println(resp?.Item);
     });
 
     dynamodb:ItemUpdateInput updateItemInput = {
-        tableName: "HighScores",
-        'key: {
+        TableName: "HighScores",
+        Key: {
             "GameID": {"S": "FlappyBird"},
             "Score": {"N": "1000"}
         },
-        updateExpression: "set PlayerName = :name",
-        expressionAttributeValues: {
+        UpdateExpression: "set PlayerName = :name",
+        ExpressionAttributeValues: {
             ":name": {"S": "Jasper"}
         }
     };
@@ -86,8 +86,8 @@ public function main() returns error? {
     io:println("Updated the high score: ", updateItemResult);
 
     dynamodb:ItemDeleteInput deleteItemInput = {
-        tableName: "HighScores",
-        'key: {
+        TableName: "HighScores",
+        Key: {
             "GameID": {"S": "FlappyBird"},
             "Score": {"N": "500"}
         }
