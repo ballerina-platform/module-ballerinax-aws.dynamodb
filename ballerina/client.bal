@@ -57,13 +57,12 @@ public isolated client class Client {
     # + return - If success, dynamodb:TableDescription record, else an error
     remote isolated function createTable(TableCreateInput tableCreationInput) returns TableDescription|error {
         string target = VERSION + DOT + "CreateTable";
-        json payload = check tableCreationInput.cloneWithType(json);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        map<json> response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
+                                                                        POST, self.uri, target, tableCreationInput.toJson());
+        map<json> response = check self.awsDynamoDb->post(self.uri, tableCreationInput, signedRequestHeaders);
         json tableDescription = check response.TableDescription;
-        return tableDescription.cloneWithType(TableDescription);
+        return tableDescription.fromJsonWithType();
     }
 
     # Deletes a table.
@@ -81,7 +80,7 @@ public isolated client class Client {
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
         json tableDescription = check response.TableDescription;
-        return tableDescription.cloneWithType(TableDescription);
+        return tableDescription.fromJsonWithType();
     }
 
     # Describes a table.
@@ -99,7 +98,7 @@ public isolated client class Client {
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
         json 'table = check response.Table;
-        return 'table.cloneWithType(TableDescription);
+        return 'table.fromJsonWithType();
     }
 
     # Lists all tables.
@@ -118,13 +117,12 @@ public isolated client class Client {
     # + return - If success, dynamodb:TableDescription record, else an error
     remote isolated function updateTable(TableUpdateInput tableUpdateInput) returns TableDescription|error {
         string target = VERSION + DOT + "UpdateTable";
-        json payload = check tableUpdateInput.cloneWithType(json);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
+                                                                        POST, self.uri, target, tableUpdateInput.toJson());
+        json response = check self.awsDynamoDb->post(self.uri, tableUpdateInput, signedRequestHeaders);
         json tableDescription = check response.TableDescription;
-        return tableDescription.cloneWithType(TableDescription);
+        return tableDescription.fromJsonWithType();
     }
 
     # Creates a new item, or replaces an old item with a new item. If an item that has the same primary key as the new
@@ -136,12 +134,11 @@ public isolated client class Client {
     # + return - If success, dynamodb:ItemDescription record, else an error
     remote isolated function createItem(ItemCreateInput itemCreateInput) returns ItemDescription|error {
         string target = VERSION + DOT + "PutItem";
-        json payload = check itemCreateInput.cloneWithType(json);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        return response.cloneWithType(ItemDescription);
+                                                                        POST, self.uri, target, itemCreateInput.toJson());
+        json response = check self.awsDynamoDb->post(self.uri, itemCreateInput, signedRequestHeaders);
+        return response.fromJsonWithType();
     }
 
     # Gets an item.
@@ -150,12 +147,11 @@ public isolated client class Client {
     # + return - If success, dynamodb:GetItemOutput record, else an error
     remote isolated function getItem(ItemGetInput itemGetInput) returns ItemGetOutput|error {
         string target = VERSION + DOT + "GetItem";
-        json payload = check itemGetInput.cloneWithType(json);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        return response.cloneWithType(ItemGetOutput);
+                                                                        POST, self.uri, target, itemGetInput.toJson());
+        json response = check self.awsDynamoDb->post(self.uri, itemGetInput, signedRequestHeaders);
+        return response.fromJsonWithType();
     }
 
     # Deletes an item.
@@ -164,11 +160,10 @@ public isolated client class Client {
     # + return - If success, dynamodb:ItemDescription record, else an error
     remote isolated function deleteItem(ItemDeleteInput itemDeleteInput) returns ItemDescription|error {
         string target = VERSION + DOT + "DeleteItem";
-        json payload = check itemDeleteInput.cloneWithType(json);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        ItemDescription response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
+                                                                        POST, self.uri, target, itemDeleteInput.toJson());
+        ItemDescription response = check self.awsDynamoDb->post(self.uri, itemDeleteInput, signedRequestHeaders);
         return response;
     }
 
@@ -178,12 +173,11 @@ public isolated client class Client {
     # + return - If success, dynamodb:ItemDescription record, else an error
     remote isolated function updateItem(ItemUpdateInput itemUpdateInput) returns ItemDescription|error {
         string target = VERSION + DOT + "UpdateItem";
-        json payload = check itemUpdateInput.cloneWithType(json);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        return response.cloneWithType(ItemDescription);
+                                                                        POST, self.uri, target, itemUpdateInput.toJson());
+        json response = check self.awsDynamoDb->post(self.uri, itemUpdateInput, signedRequestHeaders);
+        return response.fromJsonWithType();
     }
 
     # Returns all items with a particular partition key value. You must provide the name of the partition key attribute
@@ -230,12 +224,11 @@ public isolated client class Client {
     # + return - If success, dynamodb:BatchItemInsertOutput record, else an error
     remote isolated function writeBatchItems(BatchItemInsertInput batchItemInsertInput) returns BatchItemInsertOutput|error {
         string target = VERSION + DOT + "BatchWriteItem";
-        json payload = check batchItemInsertInput.cloneWithType(json);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        return response.cloneWithType(BatchItemInsertOutput);
+                                                                        POST, self.uri, target, batchItemInsertInput.toJson());
+        json response = check self.awsDynamoDb->post(self.uri, batchItemInsertInput, signedRequestHeaders);
+        return response.fromJsonWithType();
     }
 
     # Returns the current provisioned-capacity quotas for your AWS account in a Region, both for the Region as a whole
@@ -249,7 +242,7 @@ public isolated client class Client {
                                                                         self.secretAccessKey, self.region,
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
-        return response.cloneWithType(LimitDescription);
+        return response.fromJsonWithType();
     }
 
     # Creates a back up from the given table
@@ -258,13 +251,12 @@ public isolated client class Client {
     # + return - If success, dynamodb:BackupDetails record, else an error
     remote isolated function createBackup(BackupCreateInput backupCreateInput) returns BackupDetails|error {
         string target = VERSION + DOT + "CreateBackup";
-        json payload = check backupCreateInput.cloneWithType(json);
         map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
                                                                         self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
+                                                                        POST, self.uri, target, backupCreateInput);
+        json response = check self.awsDynamoDb->post(self.uri, backupCreateInput, signedRequestHeaders);
         json backUpDetails = check response.BackupDetails;
-        return backUpDetails.cloneWithType(BackupDetails);
+        return backUpDetails.fromJsonWithType();
     }
 
     # Deletes an existing backup of a table.
@@ -281,7 +273,7 @@ public isolated client class Client {
                                                                         POST, self.uri, target, payload);
         json response = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
         json backUpDetails = check response.BackupDescription;
-        return backUpDetails.cloneWithType(BackupDescription);
+        return backUpDetails.fromJsonWithType();
     }
 
     # The description of the Time to Live (TTL) status on the specified table.
@@ -298,6 +290,6 @@ public isolated client class Client {
                                                                     POST, self.uri, target, payload);
         json timeToLiveResponse = check self.awsDynamoDb->post(self.uri, payload, signedRequestHeaders);
         json timeToLiveDescription = check timeToLiveResponse.TimeToLiveDescription;
-        return timeToLiveDescription.cloneWithType(TTLDescription);
+        return timeToLiveDescription.fromJsonWithType();
     }
 }
