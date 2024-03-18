@@ -66,3 +66,6 @@ Config.toml
 # Java related ignores
 **/build/
 .gradle/
+
+# Ignore installers and archives
+*.deb
