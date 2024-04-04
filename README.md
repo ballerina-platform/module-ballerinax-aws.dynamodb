@@ -15,10 +15,10 @@ This module supports [Amazon DynamoDB REST API 20120810](https://docs.aws.amazon
 
 ## Setup guide
 
-### Step 1: Create an AWS Account:
+### Step 1: Create an AWS Account
 * If you don't already have an AWS account, you need to create one. Go to the [AWS Management Console](https://console.aws.amazon.com/console/home), click on "Create a new AWS Account," and follow the instructions.
 
-### Step 2: Get the Access Key ID and the Secret Access Key:
+### Step 2: Get the Access Key ID and the Secret Access Key
 
 Once you log in to your AWS account, you need to create a user group and a user with the necessary permissions to access DynamoDB. To do this, follow the steps below:
 
