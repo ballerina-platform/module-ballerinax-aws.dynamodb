@@ -5,14 +5,14 @@ This module supports [Amazon DynamoDB REST API 20120810](https://docs.aws.amazon
 
 ## Setup guide
 
-### Step 1: Create an AWS Account
+### Step 1: Create an AWS account
 * If you don't already have an AWS account, you need to create one. Go to the [AWS Management Console](https://console.aws.amazon.com/console/home), click on "Create a new AWS Account," and follow the instructions.
 
-### Step 2: Get the Access Key ID and the Secret Access Key
+### Step 2: Get the access key ID and the secret access key
 
 Once you log in to your AWS account, you need to create a user group and a user with the necessary permissions to access DynamoDB. To do this, follow the steps below:
 
-1. Create an AWS User Group
+1. Create an AWS user group
 
 * Navigate to the Identity and Access Management (IAM) service. Click on "Groups" and then "Create New Group."
 
@@ -22,7 +22,7 @@ Once you log in to your AWS account, you need to create a user group and a user 
 
 <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/ballerina/resources/create-group-policies.png alt="Attach policy" width="50%">
 
-2. Create an IAM User
+2. Create an IAM user
 
 * In the IAM console, navigate to "Users" and click on "Add user."
 
@@ -40,7 +40,7 @@ Once you log in to your AWS account, you need to create a user group and a user 
 
 <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/ballerina/resources/create-user-review.png alt="Review user" width="50%">
 
-3. Generate Access Key ID and Secret Access Key
+3. Generate access key ID and secret access key
 
 * Once the user is created, you will see a success message. Navigate to the "Users" tab, and select the user you created.
 
