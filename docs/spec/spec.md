@@ -1,6 +1,6 @@
 # Specification: Ballerina DynamoDB Library
 
-_Owners_: @bhashinee  
+_Authors_: @bhashinee  
 _Reviewers_: @daneshk  
 _Created_: 2023/11/09  
 _Updated_: 2022/11/10  
