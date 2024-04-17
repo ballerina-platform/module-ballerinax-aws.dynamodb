@@ -90,19 +90,19 @@ Now, utilize the available connector operations.
 ```ballerina
 public function main() returns error? {
     dynamodb:Client dynamoDb = ...//
-    dynamodb:CreateTableInput tableInput = {
-        tableName: "HighScores",
-        attributeDefinitions: [
-            {attributeName: "GameID", attributeType: "S"},
-            {attributeName: "Score", attributeType: "N"}
+    dynamodb:TableCreateInput tableInput = {
+        TableName: "HighScores",
+        AttributeDefinitions: [
+            {AttributeName: "GameID", AttributeType: "S"},
+            {AttributeName: "Score", AttributeType: "N"}
         ],
-        keySchema: [
-            {attributeName: "GameID", keyType: "HASH"},
-            {attributeName: "Score", keyType: "RANGE"}
+        KeySchema: [
+            {AttributeName: "GameID", KeyType: "HASH"},
+            {AttributeName: "Score", KeyType: "RANGE"}
         ],
-        provisionedThroughput: {
-            readCapacityUnits: 5,
-            writeCapacityUnits: 5
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5
         }
     };
     _ = check dynamoDb->createTable(tableInput);
@@ -121,7 +121,7 @@ bal run
 
 The `dynamodb` connector provides practical examples illustrating usage in various scenarios. Explore these [examples](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb/tree/master/examples), covering use cases like creating, reading, updating, deleting data from tables.
 
-1. [Maintain a game score dashboard](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb/tree/master/examples/game-scores/client.bal)
+1. [Maintain a game score dashboard](https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb/tree/master/examples/game-scores)
    This example shows how to use the DynamoDB APIs to manage a mobile gaming application dashboard that tracks high scores for different games.
 
 For comprehensive information about the connector's functionality, configuration, and usage in Ballerina programs, refer to the `dynamodb` connector's reference guide in [Ballerina Central](https://central.ballerina.io/ballerinax/aws.dynamodb/latest).
