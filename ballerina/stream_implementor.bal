@@ -51,6 +51,7 @@ class TableStream {
             self.index += 1;
             return tableName;
         }
+        return ();
     }
 
     isolated function fetchTableNames() returns string[]|error {
@@ -110,6 +111,7 @@ class ScanStream {
                 return response;
             }
         }
+        return ();
     }
 
     isolated function fetchScan() returns ScanOutput[]|error {
@@ -175,6 +177,7 @@ class QueryStream {
                 return response;
             }
         }
+        return ();
     }
 
     isolated function fetchQuery() returns QueryOutput[]|error {
@@ -240,6 +243,7 @@ class ItemsBatchGetStream {
                 return response;
             }
         }
+        return ();
     }
 
     isolated function fetchBatchItems() returns BatchItem[]|error {
