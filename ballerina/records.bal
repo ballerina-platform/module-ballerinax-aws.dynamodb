@@ -20,6 +20,7 @@ import ballerinax/'client.config;
 @display {label: "Connection Config"}
 public type ConnectionConfig record {|
     *config:ConnectionConfig;
+    # Auth credentials are ignored
     never auth?;
     # AWS credentials
     AwsCredentials|AwsTemporaryCredentials awsCredentials;
