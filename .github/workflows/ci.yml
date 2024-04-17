@@ -16,3 +16,5 @@ jobs:
     secrets: inherit
     with:
       repo-name: module-ballerinax-aws.dynamodb
+      additional-build-flags: "-x :aws.dynamodb-examples:build"
+      additional-test-flags: "-x :aws.dynamodb-examples:test"
