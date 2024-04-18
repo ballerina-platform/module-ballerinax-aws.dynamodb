@@ -30,7 +30,7 @@ Once you log in to your AWS account, you need to create a user group and a user 
 
 * Enter a username, tick the "Provide user access to the AWS Management Console - optional" checkbox, and click "I want to create an IAM user". This will enable programmatic access through access keys.
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-group-policies.png alt="Create IAM user" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-user-iam-user.png alt="Create IAM user" width="50%">
 
 * Click through the permission setup, and add the user to the user group we previously created.
 
