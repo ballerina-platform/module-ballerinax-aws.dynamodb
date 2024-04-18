@@ -56,16 +56,18 @@ Once you log in to your AWS account, you need to create a user group and a user 
 
 ## Quickstart
 
-To use the `dynamodb` connector in your Ballerina application, modify the `.bal` file as follows:
+To use the `dynamodb` connector in your Ballerina project, modify the `.bal` file as follows:
 
 ### Step 1: Import the module
+
 Import the `ballerinax/aws.dynamodb` package into your Ballerina project.
 ```ballerina
 import ballerinax/aws.dynamodb;
 ```
 
 ### Step 2: Instantiate a new connector
-Create a `dynamodb:ConnectionConfig` with the obtained access key id and secret access key to initialize the connector with it.
+
+Create a new `dynamodb:Client` by providing the access key ID, secret access key, and the region.
 ```ballerina
 dynamodb:Client dynamoDb = check new ({
     awsCredentials: {
@@ -77,6 +79,7 @@ dynamodb:Client dynamoDb = check new ({
 ```
 
 ### Step 3: Invoke the connector operation
+
 Now, utilize the available connector operations.
 ```ballerina
 public function main() returns error? {
