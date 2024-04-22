@@ -19,11 +19,11 @@ Once you log in to your AWS account, you need to create a user group and a user 
 
 * Navigate to the Identity and Access Management (IAM) service. Click on "Groups" and then "Create New Group."
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-group.png alt="Create user group" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/create-group.png alt="Create user group" width="50%">
 
 * Enter a group name and attach the necessary policies to the group. For example, you can attach the "AmazonDynamoDBFullAccess" policy to provide full access to DynamoDB.
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-group-policies.png alt="Attach policy" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/create-group-policies.png alt="Attach policy" width="50%">
 
 2. Create an IAM user
 
