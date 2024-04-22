@@ -26,33 +26,33 @@ Once you log in to your AWS account, you need to create a user group and a user 
 
 * In the IAM console, navigate to "Users" and click on "Add user."
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-user.png alt="Add user" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/create-user.png alt="Add user" width="50%">
 
 * Enter a username, tick the "Provide user access to the AWS Management Console - optional" checkbox, and click "I want to create an IAM user". This will enable programmatic access through access keys.
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-user-iam-user.png alt="Create IAM user" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/create-user-iam-user.png alt="Create IAM user" width="50%">
 
 * Click through the permission setup, and add the user to the user group we previously created.
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-user-set-permission.png alt="Attach user group" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/create-user-set-permission.png alt="Attach user group" width="50%">
 
 * Review the details and click "Create user."
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-user-review.png alt="Review user" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/create-user-review.png alt="Review user" width="50%">
 
 3. Generate access key ID and secret access key
 
 * Once the user is created, you will see a success message. Navigate to the "Users" tab, and select the user you created.
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/view-user.png alt="View User" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/view-user.png alt="View User" width="50%">
 
 * Click on the "Create access key" button to generate the access key ID and secret access key.
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/create-access-key.png alt="Create access key" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/create-access-key.png alt="Create access key" width="50%">
 
 * Follow the steps and download the CSV file containing the credentials.
 
-   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/resources/download-access-key.png alt="Download credentials" width="50%">
+   <img src=https://raw.githubusercontent.com/ballerina-platform/module-ballerinax-aws.dynamodb/main/docs/setup/resources/download-access-key.png alt="Download credentials" width="50%">
 
 ## Quickstart
 
@@ -71,10 +71,10 @@ Create a new `dynamodb:Client` by providing the access key ID, secret access key
 ```ballerina
 dynamodb:Client dynamoDb = check new ({
     awsCredentials: {
-        accessKeyId: "ACCESS_KEY_ID",
-        secretAccessKey: "SECRET_ACCESS_KEY"
+        accessKeyId,
+        secretAccessKey
     },
-    region: "REGION"
+    region
 });
 ```
 
