@@ -1,11 +1,14 @@
-## Overview
+## Package Overview
 
-The Ballerina AWS DynamoDB connector provides the capability to programatically handle [AWS DynamoDB](hhttps://aws.amazon.com/dynamodb/) related operations.
+[Amazon DynamoDB](https://aws.amazon.com/dynamodb/) is a fully managed, serverless, key-value NoSQL database designed to run high-performance applications at any scale. DynamoDB offers built-in security, continuous backups, automated multi-region replication, in-memory caching, and data export tools.
+
+The Ballerina AWS DynamoDB connector provides the capability to programmatically handle [AWS DynamoDB](hhttps://aws.amazon.com/dynamodb/) related operations.
 This module supports [Amazon DynamoDB REST API 20120810](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html).
 
 ## Setup guide
 
 ### Step 1: Create an AWS account
+
 * If you don't already have an AWS account, you need to create one. Go to the [AWS Management Console](https://console.aws.amazon.com/console/home), click on "Create a new AWS Account," and follow the instructions.
 
 ### Step 2: Get the access key ID and the secret access key
@@ -60,7 +63,7 @@ To use the `dynamodb` connector in your Ballerina project, modify the `.bal` fil
 
 ### Step 1: Import the module
 
-Import the `ballerinax/aws.dynamodb` package into your Ballerina project.
+Import the `ballerinax/aws.dynamodb` module into your Ballerina project.
 ```ballerina
 import ballerinax/aws.dynamodb;
 ```
