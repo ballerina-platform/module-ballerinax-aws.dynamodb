@@ -17,3 +17,4 @@ jobs:
     secrets: inherit
     with:
       additional-build-flags: "-x :aws.dynamodb-examples:build"
+      additional-test-flags: "-x :aws.dynamodb-examples:test"
