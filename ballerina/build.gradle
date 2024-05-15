@@ -62,8 +62,10 @@ def stripBallerinaExtensionVersion(String extVersion) {
 ballerina {
     packageOrganization = packageOrg
     module = packageName
-    testCoverageParam = "--code-coverage --coverage-format=xml"
-    buildOnDockerImage = "nightly"
+    testCoverageParam = "--code-coverage --coverage-format=xml --excludes=\"modules/oas/**\""
+    isConnector = true
+    langVersion = ballerinaLangVersion
+    platform = "java17"
 }
 
 task updateTomlFiles {
