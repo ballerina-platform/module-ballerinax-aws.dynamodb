@@ -123,7 +123,7 @@ class ScanStream {
         json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
         QueryOrScanOutput response = check jsonResponse.cloneWithType(QueryOrScanOutput);
         self.scanRequest.ExclusiveStartKey = response?.LastEvaluatedKey;
-        map<AttributeValue>[]?? items = response?.Items;
+        map<AttributeValue>[]? items = response?.Items;
         if items is map<AttributeValue>[] {
             ScanOutput[] scanResponseArr = [];
             foreach map<AttributeValue> item in items {
