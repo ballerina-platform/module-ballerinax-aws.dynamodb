@@ -65,7 +65,6 @@ ballerina {
     testCoverageParam = "--code-coverage --coverage-format=xml --excludes=\"modules/oas/**\""
     isConnector = true
     langVersion = ballerinaLangVersion
-    platform = "java17"
 }
 
 task updateTomlFiles {
