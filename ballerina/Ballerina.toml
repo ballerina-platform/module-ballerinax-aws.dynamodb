@@ -1,5 +1,5 @@
 [package]
-distribution = "2201.11.0-20241218-101200-109f6cc7"
+distribution = "2201.11.0"
 org = "ballerinax"
 name = "aws.dynamodb"
 version = "2.4.0"
