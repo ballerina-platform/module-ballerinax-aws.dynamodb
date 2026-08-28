@@ -16,10 +16,7 @@
 
 import ballerinax/aws;
 
-# Represents the generic error type for the `aws.dynamodb` module. For a failure reported by the DynamoDB service,
-# the error detail names the `httpStatusCode`, the `httpStatusText`, the `requestId`, and the `errorCode` and
-# `errorMessage` read from the service's JSON 1.0 error document — so `errorCode` is the bare exception name, for
-# example `ResourceNotFoundException`. When the body is not that document, `errorMessage` carries it verbatim.
+# Represents an AWS DynamoDB distinct error.
 public type Error distinct error<aws:ErrorDetails>;
 
 # Represents an error that occurs while generating an API request, before anything is sent: the AWS credentials
