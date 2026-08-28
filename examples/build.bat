@@ -27,7 +27,6 @@ if "%~1"=="build" (
 for /f "tokens=2 delims== " %%A in ('findstr /r "^name" "%BAL_HOME_DIR%\Ballerina.toml"') do (
     set BAL_PACKAGE_NAME=%%~A
     set BAL_PACKAGE_NAME=!BAL_PACKAGE_NAME:"=!"
-    set BAL_PACKAGE_NAME=!BAL_PACKAGE_NAME:~0,-1!
 )
 
 :: Push the package to the local repository

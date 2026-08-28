@@ -70,6 +70,28 @@ public type ConnectionConfig record {|
     # Enables relaxed data binding on the client side. When enabled, `nil` values are treated as optional,
     # and absent fields are handled as `nilable` types. Enabled by default
     boolean laxDataBinding = true;
+    # Controls how `getBatchItems` retries the keys DynamoDB reports as unprocessed
+    BatchRetryConfig batchRetry = {};
+|};
+
+# Controls how `getBatchItems` retries the keys DynamoDB reports in `UnprocessedKeys`.
+#
+# Unprocessed keys mean the table was at its throughput limit, so AWS recommends retrying them with exponential
+# backoff rather than immediately — an immediate retry is likely to be throttled again. The wait starts at
+# `initialInterval` and doubles up to `maxInterval` between retries that return nothing.
+#
+# A retry that serves even one key is progress: it resets both the wait and the unproductive-retry count. Only a
+# table that is being throttled persistently can exhaust `maxUnproductiveAttempts`, at which point the batch is
+# abandoned with an `Error` naming how many keys were left. A non-positive `initialInterval` or `maxInterval`, or a
+# negative `maxUnproductiveAttempts`, falls back to the default.
+public type BatchRetryConfig record {|
+    # The wait before the first retry, in seconds
+    decimal initialInterval = DEFAULT_BATCH_RETRY_INTERVAL;
+    # The ceiling the wait grows to, in seconds
+    decimal maxInterval = DEFAULT_MAX_BATCH_RETRY_INTERVAL;
+    # How many consecutive responses may return no items at all before the batch is abandoned. The initial
+    # request counts as the first such attempt, so zero abandons the batch on the very first empty response
+    int maxUnproductiveAttempts = DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS;
 |};
 
 # Describes the current provisioned-capacity quotas for your AWS account in a Region, both for the Region as a whole and

@@ -14,6 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/lang.runtime;
+
 # Fetches a single page of table names.
 type ListTablesPageFetcher isolated function (string? exclusiveStartTableName) returns TableList|Error;
 
@@ -167,11 +169,32 @@ class ItemsBatchGetStream {
     private int index = 0;
     private map<KeysAndAttributes> pendingKeys;
     private boolean exhausted = false;
+    private final decimal initialInterval;
+    private final decimal maxInterval;
+    private final int maxUnproductiveAttempts;
+    private decimal retryInterval;
+    private int unproductiveAttempts = 0;
+    private boolean retryPending = false;
 
-    isolated function init(BatchItemGetInput request, BatchGetPageFetcher fetchPage) returns Error? {
+    isolated function init(BatchItemGetInput request, BatchGetPageFetcher fetchPage, BatchRetryConfig retryConfig)
+        returns Error? {
         self.request = request.clone();
         self.fetchPage = fetchPage;
         self.pendingKeys = request.RequestItems.clone();
+
+        // A wait has to be positive to be a wait at all, and a negative attempt budget is meaningless; either
+        // falls back to the default. Zero is allowed, and abandons the batch on the very first empty response.
+        decimal maxInterval = retryConfig.maxInterval > 0d ? retryConfig.maxInterval
+            : DEFAULT_MAX_BATCH_RETRY_INTERVAL;
+        decimal interval = retryConfig.initialInterval > 0d ? retryConfig.initialInterval
+            : DEFAULT_BATCH_RETRY_INTERVAL;
+        self.maxInterval = maxInterval;
+        // An initial wait beyond the ceiling would otherwise ignore the ceiling entirely.
+        self.initialInterval = interval > maxInterval ? maxInterval : interval;
+        self.retryInterval = self.initialInterval;
+        self.maxUnproductiveAttempts = retryConfig.maxUnproductiveAttempts >= 0 ? retryConfig.maxUnproductiveAttempts
+            : DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS;
+
         check self.fetchNextPage();
     }
 
@@ -188,6 +211,11 @@ class ItemsBatchGetStream {
     }
 
     private isolated function fetchNextPage() returns Error? {
+        // Only a fetch that re-requests unprocessed keys waits; the first fetch of a batch never does.
+        if self.retryPending {
+            runtime:sleep(self.retryInterval);
+        }
+
         BatchItemGetInput request = self.request.clone();
         request.RequestItems = self.pendingKeys.clone();
 
@@ -218,5 +246,33 @@ class ItemsBatchGetStream {
         self.pendingKeys = unprocessedKeys;
         // An empty (or absent) `UnprocessedKeys` map means every requested key has been served.
         self.exhausted = unprocessedKeys.length() == 0;
+        if self.exhausted {
+            self.retryPending = false;
+            return;
+        }
+
+        // Keys came back unprocessed because the table was at its throughput limit, so the next fetch backs off
+        // instead of re-requesting them straight away.
+        self.retryPending = true;
+        if items.length() > 0 {
+            // The response served at least one key, so the batch is making progress: start the next wait from the
+            // base interval again rather than compounding it.
+            self.retryInterval = self.initialInterval;
+            self.unproductiveAttempts = 0;
+            return;
+        }
+
+        self.unproductiveAttempts += 1;
+        if self.unproductiveAttempts > self.maxUnproductiveAttempts {
+            int remaining = 0;
+            foreach KeysAndAttributes keysAndAttributes in unprocessedKeys {
+                remaining += keysAndAttributes.Keys.length();
+            }
+            return error Error(string `The BatchGetItem operation returned no items in ${
+                    self.unproductiveAttempts} consecutive attempt(s), with ${
+                    remaining} key(s) still unprocessed. The table is likely being throttled.`);
+        }
+        decimal nextInterval = self.retryInterval * 2;
+        self.retryInterval = nextInterval > self.maxInterval ? self.maxInterval : nextInterval;
     }
 }

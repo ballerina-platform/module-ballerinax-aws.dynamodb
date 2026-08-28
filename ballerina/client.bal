@@ -26,6 +26,7 @@ public isolated client class Client {
     private final auth:CredentialProvider credentialProvider;
     private final aws:Region|string region;
     private final string host;
+    private final readonly & BatchRetryConfig batchRetry;
 
     # Initializes the connector.
     # ```ballerina
@@ -52,6 +53,7 @@ public isolated client class Client {
             self.host = aws:resolveEndpointHost(SERVICE_NAME, config.region);
             baseURL = aws:resolveEndpoint(SERVICE_NAME, config.region);
         }
+        self.batchRetry = config.batchRetry.cloneReadOnly();
         self.credentialProvider = check new (config.auth);
         self.awsDynamoDb = check new (baseURL, httpClientConfig);
     }
@@ -278,7 +280,8 @@ public isolated client class Client {
     # + batchItemGetInput - The request payload to get items as batch
     # + return - If success, `stream<dynamodb:BatchItem, dynamodb:Error?>`, else an `dynamodb:Error`
     remote isolated function getBatchItems(BatchItemGetInput batchItemGetInput) returns stream<BatchItem, Error?>|Error {
-        ItemsBatchGetStream itemsBatchGetStream = check new (batchItemGetInput, self.batchGetItemPage);
+        ItemsBatchGetStream itemsBatchGetStream = check new (batchItemGetInput, self.batchGetItemPage,
+                self.batchRetry);
         return new stream<BatchItem, Error?>(itemsBatchGetStream);
     }
 

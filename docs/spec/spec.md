@@ -73,6 +73,8 @@ public type ConnectionConfig record {|
     aws:Region|string region;
     # Optional endpoint options: FIPS/dualstack variants, or a custom endpoint override
     aws:EndpointConfig endpoint?;
+    # Controls how `getBatchItems` retries the keys DynamoDB reports as unprocessed
+    BatchRetryConfig batchRetry = {};
     ...
 |};
 ```
@@ -286,6 +288,23 @@ The fields of the request and response records use the AWS wire names (`TableNam
 A page may legitimately come back empty while still carrying a continuation token — DynamoDB returns this when a `Limit` or a `FilterExpression` eliminated every item it examined. An empty page is therefore not the end of the result set: the stream keeps fetching until a page yields a value or the result set is genuinely exhausted, which is signalled by an absent `LastEvaluatedKey` (or `LastEvaluatedTableName`).
 
 `getBatchItems` follows the same shape with a different continuation token: whatever DynamoDB reports in `UnprocessedKeys` is re-requested on the next fetch, and the stream completes once that map comes back empty.
+
+Unprocessed keys mean the table was at its throughput limit, so those re-requests are paced rather than issued immediately — AWS warns that an immediate retry is likely to be throttled again. `ConnectionConfig.batchRetry` controls the pacing:
+
+```ballerina
+public type BatchRetryConfig record {|
+    # The wait before the first retry, in seconds
+    decimal initialInterval = 0.025;
+    # The ceiling the wait grows to, in seconds
+    decimal maxInterval = 1;
+    # How many consecutive responses may return no items at all before the batch is abandoned
+    int maxUnproductiveAttempts = 8;
+|};
+```
+
+The wait starts at `initialInterval` and doubles up to `maxInterval` between responses that serve nothing. A response that serves even one key is progress, and resets both the wait and the count — so only a persistently throttled table can exhaust the budget. Once `maxUnproductiveAttempts` consecutive responses have served nothing, the batch is abandoned with an `Error` naming how many keys were left, rather than being retried forever.
+
+The initial request counts as the first such attempt, so a `maxUnproductiveAttempts` of `0` abandons the batch on the very first empty response — and does so from `getBatchItems` itself rather than from the stream. A non-positive `initialInterval` or `maxInterval`, or a negative `maxUnproductiveAttempts`, falls back to the default rather than being taken literally, which would otherwise disable the backoff or the bound.
 
 ## 5. Errors
 

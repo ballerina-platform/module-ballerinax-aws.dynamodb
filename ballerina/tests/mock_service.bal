@@ -27,6 +27,10 @@ const string MOCK_BACKUP_ARN = "arn:aws:dynamodb:us-east-1:123456789012:table/Ba
 const string TRIGGER_NOT_FOUND = "trigger-not-found";
 const string TRIGGER_NON_JSON_ERROR = "trigger-non-json-error";
 
+// A BatchGetItem request naming this table always comes back with its keys unprocessed and no items at all — a
+// table that is being throttled continuously.
+const string TRIGGER_THROTTLE = "trigger-throttle";
+
 final readonly & aws:EndpointConfig mockEndpoint = {customEndpoint: MOCK_ENDPOINT};
 
 type MockState record {|
@@ -104,7 +108,7 @@ service / on mockListener {
                 return okResponse(scanPage());
             }
             TARGET_BATCH_GET_ITEM => {
-                return okResponse(batchGetPage());
+                return okResponse(batchGetPage(payload));
             }
             TARGET_BATCH_WRITE_ITEM => {
                 return okResponse({
@@ -258,11 +262,20 @@ isolated function queryPage() returns json {
 }
 
 // The first batch leaves one key unprocessed, which the iterator must re-request.
-isolated function batchGetPage() returns json {
+isolated function batchGetPage(json payload) returns json {
     int call;
     lock {
         mockState.batchGetCallCount += 1;
         call = mockState.batchGetCallCount;
+    }
+    json requestItems = (<map<json>>payload)["RequestItems"];
+    if requestItems is map<json> && requestItems.hasKey(TRIGGER_THROTTLE) {
+        return {
+            "Responses": {},
+            "UnprocessedKeys": {
+                [TRIGGER_THROTTLE]: {"Keys": [{"GameId": {"S": "Tetris"}, "Score": {"N": "900"}}]}
+            }
+        };
     }
     if call == 1 {
         return {
@@ -306,12 +319,21 @@ isolated function nonJsonErrorResponse() returns http:Response {
     return response;
 }
 
-isolated function newMockClient() returns Client|error =>
-    new ({
+isolated function newMockClient(BatchRetryConfig? batchRetry = ()) returns Client|error {
+    if batchRetry is BatchRetryConfig {
+        return new ({
+            region: awsRegion,
+            auth: {accessKeyId: "MOCKACCESSKEYID", secretAccessKey: "mock-secret-access-key"},
+            endpoint: mockEndpoint,
+            batchRetry: batchRetry
+        });
+    }
+    return new ({
         region: awsRegion,
         auth: {accessKeyId: "MOCKACCESSKEYID", secretAccessKey: "mock-secret-access-key"},
         endpoint: mockEndpoint
     });
+}
 
 isolated function resetMockState() {
     lock {

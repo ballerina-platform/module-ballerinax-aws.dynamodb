@@ -53,6 +53,9 @@ The shapes of the request and response records are unchanged: their fields keep 
 - A new optional `ConnectionConfig.endpoint` field of type `aws:EndpointConfig`, for selecting FIPS or
   dualstack endpoint variants and for overriding the endpoint entirely (for example, LocalStack or VPC
   interface endpoints).
+- A new `ConnectionConfig.batchRetry` field of type `BatchRetryConfig`, which controls how `getBatchItems`
+  paces its re-requests of unprocessed keys: `initialInterval`, `maxInterval` and `maxUnproductiveAttempts`.
+  The defaults back off from 25ms to 1s and abandon a batch after 8 consecutive responses that serve nothing.
 - A `Client.close()` method that releases the resources held by the credential provider (background
   refresh threads and any HTTP connections opened for STS/SSO). It is a normal method rather than a
   remote method, since closing the client does not send a request to DynamoDB.
@@ -75,6 +78,11 @@ The shapes of the request and response records are unchanged: their fields keep 
 - `getBatchItems` now re-requests only the keys DynamoDB reported as unprocessed. 2.x mutated the caller's
   request record in place while doing so, so the request the caller passed in was modified as the stream was
   consumed.
+- **[Behaviour change]** `getBatchItems` no longer ends silently when keys are left unprocessed. 2.x retried
+  once and, if that retry served nothing, ended the stream normally — so a throttled batch looked like a
+  complete one and the unserved keys were lost without any indication. The re-requests are now paced with
+  exponential backoff, as AWS recommends, and a batch that cannot make progress raises an `Error` naming how
+  many keys were left. Callers that relied on the short-but-successful stream must now handle that error.
 - Requests are now sent with the `application/x-amz-json-1.0` content type. 2.x sent `application/json`,
   which is not the protocol DynamoDB speaks.
 - Service failures are now reported with their status code and text, request id, error code and error

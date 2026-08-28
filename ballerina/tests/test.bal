@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/lang.runtime;
+import ballerina/random;
 import ballerina/test;
 import ballerinax/aws;
 import ballerinax/aws.auth;
@@ -243,6 +244,80 @@ isolated function testGetBatchItemsRetriesUnprocessedKeys() returns error? {
     test:assertEquals(keys.length(), 1);
 }
 
+// A table that is throttled continuously hands back the same keys unprocessed with no items. The iterator must
+// give up rather than re-request them in a tight loop, which is what AWS warns against.
+@test:Config {groups: ["operations", "batch"]}
+isolated function testGetBatchItemsGivesUpOnPersistentThrottling() returns error? {
+    resetMockState();
+    stream<BatchItem, Error?> results = check dynamoDb->getBatchItems({
+        RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
+    });
+
+    // The first fetch succeeds — it simply serves nothing — so the failure surfaces as the stream is consumed.
+    record {|BatchItem value;|}|Error? next = results.next();
+    if next !is Error {
+        test:assertFail("expected the throttled batch to be abandoned");
+    }
+    test:assertTrue(next.message().includes("consecutive attempt(s)"), "unexpected: " + next.message());
+    test:assertTrue(next.message().includes("1 key(s) still unprocessed"),
+            "the error should say how much of the batch was left: " + next.message());
+
+    // Bounded: the initial fetch plus its retries, rather than an unbounded spin.
+    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS + 1);
+}
+
+// The retry budget is configurable, so a caller that wants to fail fast can say so.
+@test:Config {groups: ["operations", "batch"]}
+isolated function testBatchRetryBudgetIsConfigurable() returns error? {
+    resetMockState();
+    Client failFast = check newMockClient({initialInterval: 0.001, maxInterval: 0.002, maxUnproductiveAttempts: 2});
+    stream<BatchItem, Error?> results = check failFast->getBatchItems({
+        RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
+    });
+    record {|BatchItem value;|}|Error? next = results.next();
+    if next !is Error {
+        test:assertFail("expected the throttled batch to be abandoned");
+    }
+    test:assertTrue(next.message().includes("no items in 3 consecutive attempt(s)"), "unexpected: " + next.message());
+    test:assertEquals(batchGetCallCount(), 3, "expected the initial fetch plus the two configured retries");
+    check failFast.close();
+}
+
+// A budget of zero abandons the batch on the very first empty response. The initial request is that response, so
+// the failure surfaces from `getBatchItems` itself rather than from the stream.
+@test:Config {groups: ["operations", "batch"]}
+isolated function testBatchRetryBudgetOfZeroFailsImmediately() returns error? {
+    resetMockState();
+    Client noRetry = check newMockClient({maxUnproductiveAttempts: 0});
+    stream<BatchItem, Error?>|Error results = noRetry->getBatchItems({
+        RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
+    });
+    if results !is Error {
+        test:assertFail("expected the batch to be abandoned without retrying");
+    }
+    test:assertEquals(batchGetCallCount(), 1, "expected no retry beyond the initial request");
+    check noRetry.close();
+}
+
+// A wait has to be positive to be a wait, and a negative budget is meaningless: both fall back to the default,
+// rather than being taken literally and disabling the backoff or the bound.
+@test:Config {groups: ["operations", "batch"]}
+isolated function testInvalidBatchRetryConfigFallsBackToDefaults() returns error? {
+    resetMockState();
+    Client invalid = check newMockClient({initialInterval: 0, maxInterval: -1, maxUnproductiveAttempts: -5});
+    stream<BatchItem, Error?> results = check invalid->getBatchItems({
+        RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
+    });
+    record {|BatchItem value;|}|Error? next = results.next();
+    if next !is Error {
+        test:assertFail("expected the throttled batch to be abandoned");
+    }
+    test:assertTrue(next.message().includes(string `no items in ${DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS + 1} consecutive`),
+            "unexpected: " + next.message());
+    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS + 1);
+    check invalid.close();
+}
+
 @test:Config {groups: ["operations", "batch"]}
 isolated function testWriteBatchItems() returns error? {
     resetMockState();
@@ -387,32 +462,51 @@ isolated function testRequestGenerationErrorIsAnError() {
 @test:Config {groups: ["live"], enable: isLiveServer}
 function testLiveTableRoundTrip() returns error? {
     Client liveClient = check newLiveClient();
-    string tableName = testTableName + "Live";
+    // A fixed name collides when two runs overlap, and a table left behind by an earlier failure blocks every
+    // later run with `ResourceInUseException`. The shared prefix keeps any straggler easy to find.
+    string tableName = string `${testTableName}Live${check random:createIntInRange(1, 1000000000)}`;
 
-    _ = check liveClient->createTable({
-        TableName: tableName,
-        AttributeDefinitions: [{AttributeName: "GameId", AttributeType: S}],
-        KeySchema: [{AttributeName: "GameId", KeyType: HASH}],
-        BillingMode: PAY_PER_REQUEST
-    });
-    check waitUntilTableActive(liveClient, tableName);
+    string? playerName = ();
+    do {
+        _ = check liveClient->createTable({
+            TableName: tableName,
+            AttributeDefinitions: [{AttributeName: "GameId", AttributeType: S}],
+            KeySchema: [{AttributeName: "GameId", KeyType: HASH}],
+            BillingMode: PAY_PER_REQUEST
+        });
+        check waitUntilTableActive(liveClient, tableName);
 
-    _ = check liveClient->createItem({
-        TableName: tableName,
-        Item: {"GameId": {S: "FlappyBird"}, "PlayerName": {S: "PlayerOne"}}
-    });
+        _ = check liveClient->createItem({
+            TableName: tableName,
+            Item: {"GameId": {S: "FlappyBird"}, "PlayerName": {S: "PlayerOne"}}
+        });
 
-    ItemGetOutput output = check liveClient->getItem({
-        TableName: tableName,
-        Key: {"GameId": {S: "FlappyBird"}},
-        ConsistentRead: true
-    });
-    map<AttributeValue> item = check output?.Item.ensureType();
-    test:assertEquals(item["PlayerName"]?.S, "PlayerOne");
+        ItemGetOutput output = check liveClient->getItem({
+            TableName: tableName,
+            Key: {"GameId": {S: "FlappyBird"}},
+            ConsistentRead: true
+        });
+        map<AttributeValue> item = check output?.Item.ensureType();
+        playerName = item["PlayerName"]?.S;
 
-    _ = check liveClient->deleteItem({TableName: tableName, Key: {"GameId": {S: "FlappyBird"}}});
+        _ = check liveClient->deleteItem({TableName: tableName, Key: {"GameId": {S: "FlappyBird"}}});
+    } on fail error e {
+        // Best effort: the table may never have been created, so its deletion is allowed to fail too. Without
+        // this, a run that failed part way leaves the table behind in the shared account.
+        do {
+            _ = check liveClient->deleteTable(tableName);
+            check liveClient.close();
+        } on fail {
+            // Nothing further to do here — the original failure is the one worth reporting.
+        }
+        return e;
+    }
+
     _ = check liveClient->deleteTable(tableName);
     check liveClient.close();
+
+    // Asserted only once the table is gone: a failed assertion panics, and `on fail` does not catch a panic.
+    test:assertEquals(playerName, "PlayerOne");
 }
 
 @test:Config {groups: ["live"], enable: isLiveServer}

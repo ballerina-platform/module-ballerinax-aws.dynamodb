@@ -116,6 +116,14 @@ public function main() returns error? {
         BillingMode: dynamodb:PAY_PER_REQUEST
     });
 
+    // `createTable` is asynchronous: the table stays `CREATING` for a while, and DynamoDB rejects reads and
+    // writes against it until it reports `ACTIVE`.
+    dynamodb:TableDescription description = check dynamoDb->describeTable("HighScores");
+    while description?.TableStatus != dynamodb:ACTIVE {
+        runtime:sleep(2);
+        description = check dynamoDb->describeTable("HighScores");
+    }
+
     _ = check dynamoDb->createItem({
         TableName: "HighScores",
         Item: {
