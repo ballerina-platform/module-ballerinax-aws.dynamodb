@@ -263,7 +263,7 @@ class ItemsBatchGetStream {
         }
 
         self.unproductiveAttempts += 1;
-        if self.unproductiveAttempts > self.maxUnproductiveAttempts {
+        if self.unproductiveAttempts >= self.maxUnproductiveAttempts {
             int remaining = 0;
             foreach KeysAndAttributes keysAndAttributes in unprocessedKeys {
                 remaining += keysAndAttributes.Keys.length();

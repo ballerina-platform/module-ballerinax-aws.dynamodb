@@ -89,8 +89,8 @@ public type BatchRetryConfig record {|
     decimal initialInterval = DEFAULT_BATCH_RETRY_INTERVAL;
     # The ceiling the wait grows to, in seconds
     decimal maxInterval = DEFAULT_MAX_BATCH_RETRY_INTERVAL;
-    # How many consecutive responses may return no items at all before the batch is abandoned. The initial
-    # request counts as the first such attempt, so zero abandons the batch on the very first empty response
+    # The most consecutive responses that may return no items at all: once that many have, the batch is
+    # abandoned without a further request. The initial request counts as the first such attempt.
     int maxUnproductiveAttempts = DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS;
 |};
 

@@ -44,15 +44,10 @@ public isolated client class Client {
     public isolated function init(ConnectionConfig config) returns error? {
         http:ClientConfiguration httpClientConfig = {httpVersion: config.httpVersion, http1Settings: config.http1Settings, http2Settings: config.http2Settings, timeout: config.timeout, forwarded: config.forwarded, followRedirects: config.followRedirects, poolConfig: config.poolConfig, cache: config.cache, compression: config.compression, circuitBreaker: config.circuitBreaker, retryConfig: config.retryConfig, cookieConfig: config.cookieConfig, responseLimits: config.responseLimits, secureSocket: config.secureSocket, proxy: config.proxy, socketConfig: config.socketConfig, validation: config.validation, laxDataBinding: config.laxDataBinding};
         self.region = config.region;
-        aws:EndpointConfig? endpointConfig = config.endpoint;
-        string baseURL;
-        if endpointConfig is aws:EndpointConfig {
-            self.host = aws:resolveEndpointHost(SERVICE_NAME, config.region, endpointConfig);
-            baseURL = aws:resolveEndpoint(SERVICE_NAME, config.region, endpointConfig);
-        } else {
-            self.host = aws:resolveEndpointHost(SERVICE_NAME, config.region);
-            baseURL = aws:resolveEndpoint(SERVICE_NAME, config.region);
-        }
+        // Both resolvers default the config to `{}`, which is what an absent `endpoint` means.
+        aws:EndpointConfig endpointConfig = config.endpoint ?: {};
+        self.host = aws:resolveEndpointHost(SERVICE_NAME, config.region, endpointConfig);
+        string baseURL = aws:resolveEndpoint(SERVICE_NAME, config.region, endpointConfig);
         self.batchRetry = config.batchRetry.cloneReadOnly();
         self.credentialProvider = check new (config.auth);
         self.awsDynamoDb = check new (baseURL, httpClientConfig);

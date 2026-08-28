@@ -263,7 +263,7 @@ isolated function testGetBatchItemsGivesUpOnPersistentThrottling() returns error
             "the error should say how much of the batch was left: " + next.message());
 
     // Bounded: the initial fetch plus its retries, rather than an unbounded spin.
-    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS + 1);
+    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS);
 }
 
 // The retry budget is configurable, so a caller that wants to fail fast can say so.
@@ -278,8 +278,8 @@ isolated function testBatchRetryBudgetIsConfigurable() returns error? {
     if next !is Error {
         test:assertFail("expected the throttled batch to be abandoned");
     }
-    test:assertTrue(next.message().includes("no items in 3 consecutive attempt(s)"), "unexpected: " + next.message());
-    test:assertEquals(batchGetCallCount(), 3, "expected the initial fetch plus the two configured retries");
+    test:assertTrue(next.message().includes("no items in 2 consecutive attempt(s)"), "unexpected: " + next.message());
+    test:assertEquals(batchGetCallCount(), 2, "expected no more attempts than the configured budget");
     check failFast.close();
 }
 
@@ -312,9 +312,9 @@ isolated function testInvalidBatchRetryConfigFallsBackToDefaults() returns error
     if next !is Error {
         test:assertFail("expected the throttled batch to be abandoned");
     }
-    test:assertTrue(next.message().includes(string `no items in ${DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS + 1} consecutive`),
+    test:assertTrue(next.message().includes(string `no items in ${DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS} consecutive`),
             "unexpected: " + next.message());
-    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS + 1);
+    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS);
     check invalid.close();
 }
 

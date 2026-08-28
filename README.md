@@ -99,6 +99,9 @@ dynamodb:Client dynamoDb = check new ({
 Create a table, write an item into it, then read the item back.
 
 ```ballerina
+import ballerina/io;
+import ballerina/lang.runtime;
+
 public function main() returns error? {
     _ = check dynamoDb->createTable({
         TableName: "HighScores",
