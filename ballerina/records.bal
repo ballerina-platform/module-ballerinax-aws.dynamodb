@@ -82,15 +82,15 @@ public type ConnectionConfig record {|
 #
 # A retry that serves even one key is progress: it resets both the wait and the unproductive-retry count. Only a
 # table that is being throttled persistently can exhaust `maxUnproductiveAttempts`, at which point the batch is
-# abandoned with an `Error` naming how many keys were left. A non-positive `initialInterval` or `maxInterval`, or a
-# negative `maxUnproductiveAttempts`, falls back to the default.
+# abandoned with an `Error` naming how many keys were left. A non-positive value in any of the three fields is
+# treated as unset and falls back to that field's default.
 public type BatchRetryConfig record {|
     # The wait before the first retry, in seconds
     decimal initialInterval = DEFAULT_BATCH_RETRY_INTERVAL;
     # The ceiling the wait grows to, in seconds
     decimal maxInterval = DEFAULT_MAX_BATCH_RETRY_INTERVAL;
     # The most consecutive responses that may return no items at all: once that many have, the batch is
-    # abandoned without a further request. The initial request counts as the first such attempt.
+    # abandoned without a further request.
     int maxUnproductiveAttempts = DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS;
 |};
 

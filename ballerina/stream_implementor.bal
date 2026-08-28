@@ -182,8 +182,8 @@ class ItemsBatchGetStream {
         self.fetchPage = fetchPage;
         self.pendingKeys = request.RequestItems.clone();
 
-        // A wait has to be positive to be a wait at all, and a negative attempt budget is meaningless; either
-        // falls back to the default. Zero is allowed, and abandons the batch on the very first empty response.
+        // A wait has to be positive to be a wait at all, and an attempt budget below one would abandon the batch
+        // before it had made a single request. Any such value is treated as unset and falls back to the default.
         decimal maxInterval = retryConfig.maxInterval > 0d ? retryConfig.maxInterval
             : DEFAULT_MAX_BATCH_RETRY_INTERVAL;
         decimal interval = retryConfig.initialInterval > 0d ? retryConfig.initialInterval
@@ -192,7 +192,7 @@ class ItemsBatchGetStream {
         // An initial wait beyond the ceiling would otherwise ignore the ceiling entirely.
         self.initialInterval = interval > maxInterval ? maxInterval : interval;
         self.retryInterval = self.initialInterval;
-        self.maxUnproductiveAttempts = retryConfig.maxUnproductiveAttempts >= 0 ? retryConfig.maxUnproductiveAttempts
+        self.maxUnproductiveAttempts = retryConfig.maxUnproductiveAttempts > 0 ? retryConfig.maxUnproductiveAttempts
             : DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS;
 
         check self.fetchNextPage();

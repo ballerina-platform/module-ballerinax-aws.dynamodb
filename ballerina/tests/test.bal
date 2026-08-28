@@ -283,24 +283,29 @@ isolated function testBatchRetryBudgetIsConfigurable() returns error? {
     check failFast.close();
 }
 
-// A budget of zero abandons the batch on the very first empty response. The initial request is that response, so
-// the failure surfaces from `getBatchItems` itself rather than from the stream.
 @test:Config {groups: ["operations", "batch"]}
-isolated function testBatchRetryBudgetOfZeroFailsImmediately() returns error? {
+isolated function testBatchRetryBudgetOfZeroFallsBackToDefault() returns error? {
     resetMockState();
-    Client noRetry = check newMockClient({maxUnproductiveAttempts: 0});
-    stream<BatchItem, Error?>|Error results = noRetry->getBatchItems({
+    Client zeroBudget = check newMockClient({
+        initialInterval: 0.001,
+        maxInterval: 0.002,
+        maxUnproductiveAttempts: 0
+    });
+    stream<BatchItem, Error?> results = check zeroBudget->getBatchItems({
         RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
     });
-    if results !is Error {
-        test:assertFail("expected the batch to be abandoned without retrying");
+    record {|BatchItem value;|}|Error? next = results.next();
+    if next !is Error {
+        test:assertFail("expected the throttled batch to be abandoned");
     }
-    test:assertEquals(batchGetCallCount(), 1, "expected no retry beyond the initial request");
-    check noRetry.close();
+    test:assertTrue(next.message().includes(string `no items in ${DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS} consecutive`),
+            "unexpected: " + next.message());
+    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS,
+            "expected the default budget rather than an immediate abandon");
+    check zeroBudget.close();
 }
 
-// A wait has to be positive to be a wait, and a negative budget is meaningless: both fall back to the default,
-// rather than being taken literally and disabling the backoff or the bound.
+// A non-positive value in any field is treated as unset and falls back to that field's default.
 @test:Config {groups: ["operations", "batch"]}
 isolated function testInvalidBatchRetryConfigFallsBackToDefaults() returns error? {
     resetMockState();

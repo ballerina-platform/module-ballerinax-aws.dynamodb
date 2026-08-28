@@ -304,7 +304,9 @@ public type BatchRetryConfig record {|
 
 The wait starts at `initialInterval` and doubles up to `maxInterval` between responses that serve nothing. A response that serves even one key is progress, and resets both the wait and the count — so only a persistently throttled table can exhaust the budget. Once `maxUnproductiveAttempts` consecutive responses have served nothing, the batch is abandoned with an `Error` naming how many keys were left, rather than being retried forever.
 
-The initial request counts as the first such attempt, so a `maxUnproductiveAttempts` of `0` abandons the batch on the very first empty response — and does so from `getBatchItems` itself rather than from the stream. A non-positive `initialInterval` or `maxInterval`, or a negative `maxUnproductiveAttempts`, falls back to the default rather than being taken literally, which would otherwise disable the backoff or the bound.
+The initial request counts as the first such attempt, so `maxUnproductiveAttempts` bounds the total number of requests a throttled batch makes, not the retries on top of the first one.
+
+A non-positive value in any of the three fields is treated as unset and falls back to that field's default.
 
 ## 5. Errors
 

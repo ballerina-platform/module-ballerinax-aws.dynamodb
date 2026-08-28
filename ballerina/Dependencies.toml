@@ -335,18 +335,6 @@ dependencies = [
 ]
 
 [[package]]
-org = "ballerinai"
-name = "observe"
-version = "0.0.0"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "observe"}
-]
-modules = [
-	{org = "ballerinai", packageName = "observe", moduleName = "observe"}
-]
-
-[[package]]
 org = "ballerinax"
 name = "aws"
 version = "1.0.1"
@@ -368,7 +356,6 @@ dependencies = [
 	{org = "ballerina", name = "os"},
 	{org = "ballerina", name = "random"},
 	{org = "ballerina", name = "test"},
-	{org = "ballerinai", name = "observe"},
 	{org = "ballerinax", name = "aws"}
 ]
 modules = [

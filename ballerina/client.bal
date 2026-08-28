@@ -49,8 +49,8 @@ public isolated client class Client {
         self.host = aws:resolveEndpointHost(SERVICE_NAME, config.region, endpointConfig);
         string baseURL = aws:resolveEndpoint(SERVICE_NAME, config.region, endpointConfig);
         self.batchRetry = config.batchRetry.cloneReadOnly();
-        self.credentialProvider = check new (config.auth);
         self.awsDynamoDb = check new (baseURL, httpClientConfig);
+        self.credentialProvider = check new (config.auth);
     }
 
     # Creates a table. The CreateTable operation adds a new table to your account. In an AWS account, table names must

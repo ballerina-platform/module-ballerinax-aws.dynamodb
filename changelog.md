@@ -56,6 +56,7 @@ The shapes of the request and response records are unchanged: their fields keep 
 - A new `ConnectionConfig.batchRetry` field of type `BatchRetryConfig`, which controls how `getBatchItems`
   paces its re-requests of unprocessed keys: `initialInterval`, `maxInterval` and `maxUnproductiveAttempts`.
   The defaults back off from 25ms to 1s and abandon a batch after 8 consecutive responses that serve nothing.
+  A non-positive value in any of the three fields is treated as unset and falls back to that field's default.
 - A `Client.close()` method that releases the resources held by the credential provider (background
   refresh threads and any HTTP connections opened for STS/SSO). It is a normal method rather than a
   remote method, since closing the client does not send a request to DynamoDB.
