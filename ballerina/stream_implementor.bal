@@ -14,282 +14,209 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/http;
+# Fetches a single page of table names.
+type ListTablesPageFetcher isolated function (string? exclusiveStartTableName) returns TableList|Error;
 
+# Fetches a single page of scan results.
+type ScanPageFetcher isolated function (ScanInput request) returns QueryOrScanOutput|Error;
+
+# Fetches a single page of query results.
+type QueryPageFetcher isolated function (QueryInput request) returns QueryOrScanOutput|Error;
+
+# Fetches a single page of batch-get results.
+type BatchGetPageFetcher isolated function (BatchItemGetInput request) returns BatchGetItemsOutput|Error;
+
+# Iterates over every table name of the result set, fetching the next page only once the current one is exhausted.
 class TableStream {
-    private string[] currentEntries = [];
+    private final ListTablesPageFetcher fetchPage;
+    private string[] currentPage = [];
     private int index = 0;
-    private final http:Client httpClient;
-    private final string accessKeyId;
-    private final string secretAccessKey;
-    private final string region;
-    private final string awsHost;
-    private final string uri = SLASH;
-    private string? exclusiveStartTableName;
+    private string? nextStartTableName = ();
+    private boolean exhausted = false;
 
-    isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region)
-                            returns error? {
-        self.httpClient = httpClient;
-        self.accessKeyId = accessKey;
-        self.secretAccessKey = secretKey;
-        self.region = region;
-        self.awsHost = AWS_SERVICE + DOT + self.region + DOT + AWS_HOST;
-        self.exclusiveStartTableName = null;
-        self.currentEntries = check self.fetchTableNames();
+    isolated function init(ListTablesPageFetcher fetchPage) returns Error? {
+        self.fetchPage = fetchPage;
+        check self.fetchNextPage();
     }
 
-    public isolated function next() returns record {|string value;|}|error? {
-        if self.index < self.currentEntries.length() {
-            record {|string value;|} tableName = {value: self.currentEntries[self.index]};
-            self.index += 1;
-            return tableName;
+    public isolated function next() returns record {|string value;|}|Error? {
+        // Keep fetching until a page yields a value or the result set is exhausted. A page can legitimately come
+        // back empty while still carrying a continuation token, so the emptiness of one page must not be mistaken
+        // for the end of the result set — nor may an empty page be indexed into.
+        while self.index >= self.currentPage.length() {
+            if self.exhausted {
+                return;
+            }
+            check self.fetchNextPage();
         }
-        if self.exclusiveStartTableName is string {
-            self.index = 0;
-            self.currentEntries = check self.fetchTableNames();
-            record {|string value;|} tableName = {value: self.currentEntries[self.index]};
-            self.index += 1;
-            return tableName;
-        }
-        return ();
+        record {|string value;|} next = {value: self.currentPage[self.index]};
+        self.index += 1;
+        return next;
     }
 
-    isolated function fetchTableNames() returns string[]|error {
-        string target = VERSION + DOT + "ListTables";
-        TableListRequest request = {
-            ExclusiveStartTableName: self.exclusiveStartTableName
-        };
-        json payload = check request.cloneWithType(json);
-        map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
-                                                                        self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json response = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
-        TableList tableListResp = check response.cloneWithType(TableList);
-        self.exclusiveStartTableName = tableListResp?.LastEvaluatedTableName;
-        string[]? tableList = tableListResp?.TableNames;
-        if tableList is string[] {
-            return tableList;
-        }
-        return [];
+    private isolated function fetchNextPage() returns Error? {
+        TableList page = check self.fetchPage(self.nextStartTableName);
+        self.currentPage = page?.TableNames ?: [];
+        self.index = 0;
+        self.nextStartTableName = page?.LastEvaluatedTableName;
+        // Absent `LastEvaluatedTableName` means this was the final page.
+        self.exhausted = self.nextStartTableName !is string;
     }
 }
 
+# Iterates over every item matched by a scan, fetching the next page only once the current one is exhausted.
 class ScanStream {
-    private ScanOutput[] currentEntries = [];
+    private final ScanPageFetcher fetchPage;
+    private final ScanInput request;
+    private ScanOutput[] currentPage = [];
     private int index = 0;
-    private final http:Client httpClient;
-    private final string accessKeyId;
-    private final string secretAccessKey;
-    private final string region;
-    private final string awsHost;
-    private final string uri = SLASH;
-    private ScanInput scanRequest;
+    private map<AttributeValue>? nextStartKey = ();
+    private boolean exhausted = false;
 
-    isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region,
-            ScanInput scanRequest) returns error? {
-        self.httpClient = httpClient;
-        self.accessKeyId = accessKey;
-        self.secretAccessKey = secretKey;
-        self.region = region;
-        self.awsHost = AWS_SERVICE + DOT + self.region + DOT + AWS_HOST;
-        self.scanRequest = scanRequest;
-        self.currentEntries = check self.fetchScan();
+    isolated function init(ScanInput request, ScanPageFetcher fetchPage) returns Error? {
+        self.request = request.clone();
+        self.fetchPage = fetchPage;
+        check self.fetchNextPage();
     }
 
-    public isolated function next() returns record {|ScanOutput value;|}|error? {
-        if self.index < self.currentEntries.length() {
-            record {|ScanOutput value;|} response = {value: self.currentEntries[self.index]};
-            self.index += 1;
-            return response;
-        }
-        if self.scanRequest?.ExclusiveStartKey is map<AttributeValue> {
-            self.index = 0;
-            self.currentEntries = check self.fetchScan();
-            if self.index < self.currentEntries.length() {
-                record {|ScanOutput value;|} response = {value: self.currentEntries[self.index]};
-                self.index += 1;
-                return response;
+    public isolated function next() returns record {|ScanOutput value;|}|Error? {
+        while self.index >= self.currentPage.length() {
+            if self.exhausted {
+                return;
             }
+            check self.fetchNextPage();
         }
-        return ();
+        record {|ScanOutput value;|} next = {value: self.currentPage[self.index]};
+        self.index += 1;
+        return next;
     }
 
-    isolated function fetchScan() returns ScanOutput[]|error {
-        string target = VERSION + DOT + "Scan";
-        json payload = check self.scanRequest.cloneWithType(json);
-        map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
-                                                                        self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
-        QueryOrScanOutput response = check jsonResponse.cloneWithType(QueryOrScanOutput);
-        self.scanRequest.ExclusiveStartKey = response?.LastEvaluatedKey;
-        map<AttributeValue>[]? items = response?.Items;
-        if items is map<AttributeValue>[] {
-            ScanOutput[] scanResponseArr = [];
-            foreach map<AttributeValue> item in items {
-                ScanOutput scanResponse = {
-                    ConsumedCapacity: response?.ConsumedCapacity,
-                    Item: item
-                };
-                scanResponseArr.push(scanResponse);
-            }
-            return scanResponseArr;
-        } else {
-            return [];
+    private isolated function fetchNextPage() returns Error? {
+        ScanInput request = self.request.clone();
+        map<AttributeValue>? startKey = self.nextStartKey;
+        if startKey is map<AttributeValue> {
+            request.ExclusiveStartKey = startKey;
         }
+
+        QueryOrScanOutput page = check self.fetchPage(request);
+        ScanOutput[] items = [];
+        foreach map<AttributeValue> item in page?.Items ?: [] {
+            items.push({ConsumedCapacity: page?.ConsumedCapacity, Item: item});
+        }
+        self.currentPage = items;
+        self.index = 0;
+        self.nextStartKey = page?.LastEvaluatedKey;
+        // Absent `LastEvaluatedKey` means this was the final page.
+        self.exhausted = self.nextStartKey !is map<AttributeValue>;
     }
 }
 
+# Iterates over every item matched by a query, fetching the next page only once the current one is exhausted.
 class QueryStream {
-    private QueryOutput[] currentEntries = [];
+    private final QueryPageFetcher fetchPage;
+    private final QueryInput request;
+    private QueryOutput[] currentPage = [];
     private int index = 0;
-    private final http:Client httpClient;
-    private final string accessKeyId;
-    private final string secretAccessKey;
-    private final string region;
-    private final string awsHost;
-    private final string uri = SLASH;
-    private QueryInput queryRequest;
+    private map<AttributeValue>? nextStartKey = ();
+    private boolean exhausted = false;
 
-    isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region,
-            QueryInput queryRequest) returns error? {
-        self.httpClient = httpClient;
-        self.accessKeyId = accessKey;
-        self.secretAccessKey = secretKey;
-        self.region = region;
-        self.awsHost = AWS_SERVICE + DOT + self.region + DOT + AWS_HOST;
-        self.queryRequest = queryRequest;
-        self.currentEntries = check self.fetchQuery();
+    isolated function init(QueryInput request, QueryPageFetcher fetchPage) returns Error? {
+        self.request = request.clone();
+        self.fetchPage = fetchPage;
+        check self.fetchNextPage();
     }
 
-    public isolated function next() returns record {|QueryOutput value;|}|error? {
-        if self.index < self.currentEntries.length() {
-            record {|QueryOutput value;|} response = {value: self.currentEntries[self.index]};
-            self.index += 1;
-            return response;
-        }
-        if self.queryRequest?.ExclusiveStartKey is map<AttributeValue> {
-            self.index = 0;
-            self.currentEntries = check self.fetchQuery();
-            if self.index < self.currentEntries.length() {
-                record {|QueryOutput value;|} response = {value: self.currentEntries[self.index]};
-                self.index += 1;
-                return response;
+    public isolated function next() returns record {|QueryOutput value;|}|Error? {
+        while self.index >= self.currentPage.length() {
+            if self.exhausted {
+                return;
             }
+            check self.fetchNextPage();
         }
-        return ();
+        record {|QueryOutput value;|} next = {value: self.currentPage[self.index]};
+        self.index += 1;
+        return next;
     }
 
-    isolated function fetchQuery() returns QueryOutput[]|error {
-        string target = VERSION + DOT + "Query";
-        json payload = check self.queryRequest.cloneWithType(json);
-        map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
-                                                                        self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
-        QueryOrScanOutput response = check jsonResponse.cloneWithType(QueryOrScanOutput);
-        self.queryRequest.ExclusiveStartKey = response?.LastEvaluatedKey;
-        map<AttributeValue>[]? items = response?.Items;
-        if items is map<AttributeValue>[] {
-            QueryOutput[] queryResponseArr = [];
-            foreach map<AttributeValue> item in items {
-                QueryOutput queryResponse = {
-                    ConsumedCapacity: response?.ConsumedCapacity,
-                    Item: item
-                };
-                queryResponseArr.push(queryResponse);
-            }
-            return queryResponseArr;
-        } else {
-            return [];
+    private isolated function fetchNextPage() returns Error? {
+        QueryInput request = self.request.clone();
+        map<AttributeValue>? startKey = self.nextStartKey;
+        if startKey is map<AttributeValue> {
+            request.ExclusiveStartKey = startKey;
         }
+
+        QueryOrScanOutput page = check self.fetchPage(request);
+        QueryOutput[] items = [];
+        foreach map<AttributeValue> item in page?.Items ?: [] {
+            items.push({ConsumedCapacity: page?.ConsumedCapacity, Item: item});
+        }
+        self.currentPage = items;
+        self.index = 0;
+        self.nextStartKey = page?.LastEvaluatedKey;
+        // Absent `LastEvaluatedKey` means this was the final page.
+        self.exhausted = self.nextStartKey !is map<AttributeValue>;
     }
 }
 
+# Iterates over every item returned by a batch get, re-requesting the unprocessed keys only once the items already
+# retrieved have been consumed.
 class ItemsBatchGetStream {
-    private BatchItem[] currentEntries = [];
+    private final BatchGetPageFetcher fetchPage;
+    private final BatchItemGetInput request;
+    private BatchItem[] currentPage = [];
     private int index = 0;
-    private final http:Client httpClient;
-    private final string accessKeyId;
-    private final string secretAccessKey;
-    private final string region;
-    private final string awsHost;
-    private final string uri = SLASH;
-    private BatchItemGetInput itemsBatchGetRequest;
+    private map<KeysAndAttributes> pendingKeys;
+    private boolean exhausted = false;
 
-    isolated function init(http:Client httpClient, string host, string accessKey, string secretKey, string region,
-            BatchItemGetInput itemsBatchGetRequest) returns error? {
-        self.httpClient = httpClient;
-        self.accessKeyId = accessKey;
-        self.secretAccessKey = secretKey;
-        self.region = region;
-        self.awsHost = AWS_SERVICE + DOT + self.region + DOT + AWS_HOST;
-        self.itemsBatchGetRequest = itemsBatchGetRequest;
-        self.currentEntries = check self.fetchBatchItems();
+    isolated function init(BatchItemGetInput request, BatchGetPageFetcher fetchPage) returns Error? {
+        self.request = request.clone();
+        self.fetchPage = fetchPage;
+        self.pendingKeys = request.RequestItems.clone();
+        check self.fetchNextPage();
     }
 
-    public isolated function next() returns record {|BatchItem value;|}|error? {
-        if self.index < self.currentEntries.length() {
-            record {|BatchItem value;|} response = {value: self.currentEntries[self.index]};
-            self.index += 1;
-            return response;
-        }
-        if self.itemsBatchGetRequest.RequestItems.keys().length() != 0 {
-            self.index = 0;
-            self.currentEntries = check self.fetchBatchItems();
-            if self.index < self.currentEntries.length() {
-                record {|BatchItem value;|} response = {value: self.currentEntries[self.index]};
-                self.index += 1;
-                return response;
+    public isolated function next() returns record {|BatchItem value;|}|Error? {
+        while self.index >= self.currentPage.length() {
+            if self.exhausted {
+                return;
             }
+            check self.fetchNextPage();
         }
-        return ();
+        record {|BatchItem value;|} next = {value: self.currentPage[self.index]};
+        self.index += 1;
+        return next;
     }
 
-    isolated function fetchBatchItems() returns BatchItem[]|error {
-        string target = VERSION + DOT + "BatchGetItem";
-        json payload = check self.itemsBatchGetRequest.cloneWithType(json);
-        map<string> signedRequestHeaders = check getSignedRequestHeaders(self.awsHost, self.accessKeyId,
-                                                                        self.secretAccessKey, self.region,
-                                                                        POST, self.uri, target, payload);
-        json jsonResponse = check self.httpClient->post(self.uri, payload, signedRequestHeaders);
-        BatchGetItemsOutput response = check jsonResponse.cloneWithType(BatchGetItemsOutput);
+    private isolated function fetchNextPage() returns Error? {
+        BatchItemGetInput request = self.request.clone();
+        request.RequestItems = self.pendingKeys.clone();
 
-        self.itemsBatchGetRequest.RequestItems = self.getRequestItemsToNextBatch(response);
-        map<map<AttributeValue>[]>?? batchResponses = response?.Responses;
-        ConsumedCapacity[]?? consumedCapacities = response?.ConsumedCapacity;
-        map<ConsumedCapacity> consumedCapacityMap = {};
-        if consumedCapacities is ConsumedCapacity[] {
-            foreach ConsumedCapacity consumedCapacity in consumedCapacities {
-                consumedCapacityMap[consumedCapacity?.TableName.toString()] = consumedCapacity;
+        BatchGetItemsOutput page = check self.fetchPage(request);
+        // `ConsumedCapacity` is reported per table, so index it by table name to attach it to each item.
+        map<ConsumedCapacity> capacityByTable = {};
+        foreach ConsumedCapacity capacity in page?.ConsumedCapacity ?: [] {
+            string? tableName = capacity?.TableName;
+            if tableName is string {
+                capacityByTable[tableName] = capacity;
             }
         }
-        if batchResponses is map<map<AttributeValue>[]> {
-            BatchItem[] itemResponseArr = [];
-            string[] keys = batchResponses.keys();
-            foreach string keyName in keys {
-                map<AttributeValue>[] items = batchResponses.get(keyName);
-                ConsumedCapacity? consumedCapacity = consumedCapacityMap.hasKey(keyName) ?
-                    consumedCapacityMap.get(keyName) : ();
-                foreach map<AttributeValue> item in items {
-                    BatchItem itemResponse = {
-                        ConsumedCapacity: consumedCapacity,
-                        TableName: keyName,
-                        Item: item
-                    };
-                    itemResponseArr.push(itemResponse);
-                }
+
+        BatchItem[] items = [];
+        foreach [string, map<AttributeValue>[]] [tableName, tableItems] in (page?.Responses ?: {}).entries() {
+            foreach map<AttributeValue> item in tableItems {
+                items.push({
+                    ConsumedCapacity: capacityByTable[tableName],
+                    TableName: tableName,
+                    Item: item
+                });
             }
-            return itemResponseArr;
-        } else {
-            return [];
         }
-    }
-    // Get RequestItem to construct request payload for the next batch
-    private isolated function getRequestItemsToNextBatch(BatchGetItemsOutput itemsBatchGetResponse)
-                                                        returns map<KeysAndAttributes> {
-        map<KeysAndAttributes>?? unprocessedKeys = itemsBatchGetResponse?.UnprocessedKeys;
-        return (unprocessedKeys is map<KeysAndAttributes> && unprocessedKeys !== {}) ?
-            <map<KeysAndAttributes>>unprocessedKeys : {};
+        self.currentPage = items;
+        self.index = 0;
+
+        map<KeysAndAttributes> unprocessedKeys = page?.UnprocessedKeys ?: {};
+        self.pendingKeys = unprocessedKeys;
+        // An empty (or absent) `UnprocessedKeys` map means every requested key has been served.
+        self.exhausted = unprocessedKeys.length() == 0;
     }
 }
