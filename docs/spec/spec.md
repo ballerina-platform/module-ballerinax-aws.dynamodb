@@ -296,7 +296,7 @@ public type BatchRetryConfig record {|
     # The wait before the first retry, in seconds
     decimal initialInterval = 0.025;
     # The ceiling the wait grows to, in seconds
-    decimal maxInterval = 1;
+    decimal maxInterval = 20;
     # How many consecutive responses may return no items at all before the batch is abandoned
     int maxUnproductiveAttempts = 8;
 |};
