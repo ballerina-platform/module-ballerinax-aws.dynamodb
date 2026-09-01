@@ -14,49 +14,44 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string AWS_HOST = "amazonaws.com";
-const string AWS_SERVICE = "dynamodb";
-const string VERSION = "DynamoDB_20120810";
+// The endpoint prefix of the DynamoDB service, used both to resolve the endpoint URL
+// (e.g. `dynamodb.us-east-1.amazonaws.com`) and as the SigV4 signing name.
+const string SERVICE_NAME = "dynamodb";
 
-const string UTF_8 = "UTF-8";
-const string HOST = "host";
-const string CONTENT_TYPE = "content-type";
-const string APPLICATION_JSON = "application/json";
-const string X_AMZ_DATE = "x-amz-date";
-const string X_AMZ_TARGET = "x-amz-target";
-const string AWS4_REQUEST = "aws4_request";
-const string AWS4_HMAC_SHA256 = "AWS4-HMAC-SHA256";
-const string CREDENTIAL = "Credential";
-const string SIGNED_HEADER = "SignedHeaders";
-const string SIGNATURE = "Signature";
-const string AWS4 = "AWS4";
-const string ISO8601_BASIC_DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'";
-const string SHORT_DATE_FORMAT = "yyyyMMdd";
-const string ENCODED_SLASH = "%2F";
-const string SLASH = "/";
-const string EMPTY_STRING = "";
-const string NEW_LINE = "\n";
-const string COLON = ":";
-const string SEMICOLON = ";";
-const string EQUAL = "=";
-const string SPACE = " ";
-const string COMMA = ",";
-const string DOT = ".";
-const string Z = "Z";
+// The DynamoDB API version, used as the `x-amz-target` prefix.
+const string API_VERSION = "DynamoDB_20120810";
 
-// HTTP.
-const string POST = "POST";
-const string HTTPS = "https://";
+const string TARGET_BATCH_GET_ITEM = API_VERSION + ".BatchGetItem";
+const string TARGET_BATCH_WRITE_ITEM = API_VERSION + ".BatchWriteItem";
+const string TARGET_CREATE_BACKUP = API_VERSION + ".CreateBackup";
+const string TARGET_CREATE_TABLE = API_VERSION + ".CreateTable";
+const string TARGET_DELETE_BACKUP = API_VERSION + ".DeleteBackup";
+const string TARGET_DELETE_ITEM = API_VERSION + ".DeleteItem";
+const string TARGET_DELETE_TABLE = API_VERSION + ".DeleteTable";
+const string TARGET_DESCRIBE_LIMITS = API_VERSION + ".DescribeLimits";
+const string TARGET_DESCRIBE_TABLE = API_VERSION + ".DescribeTable";
+const string TARGET_DESCRIBE_TIME_TO_LIVE = API_VERSION + ".DescribeTimeToLive";
+const string TARGET_GET_ITEM = API_VERSION + ".GetItem";
+const string TARGET_LIST_TABLES = API_VERSION + ".ListTables";
+const string TARGET_PUT_ITEM = API_VERSION + ".PutItem";
+const string TARGET_QUERY = API_VERSION + ".Query";
+const string TARGET_SCAN = API_VERSION + ".Scan";
+const string TARGET_UPDATE_ITEM = API_VERSION + ".UpdateItem";
+const string TARGET_UPDATE_TABLE = API_VERSION + ".UpdateTable";
 
-// Constants to refer the headers.
-const string HEADER_CONTENT_TYPE = "Content-Type";
-const string HEADER_X_AMZ_CONTENT_SHA256 = "X-Amz-Content-Sha256";
-const string HEADER_X_AMZ_DATE = "X-Amz-Date";
-const string HEADER_X_AMZ_TARGET = "X-Amz-Target";
-const string HEADER_HOST = "Host";
-const string HEADER_AUTHORIZATION = "Authorization";
+const string ROOT_PATH = "/";
 
-const string GENERATE_SIGNED_REQUEST_HEADERS_FAILED_MSG = "Error occurred while generating signed request headers.";
+// DynamoDB speaks the AWS JSON 1.0 protocol.
+const string JSON_CONTENT_TYPE = "application/x-amz-json-1.0";
+
+// Defaults for `BatchRetryConfig`, also used as the fallback when a non-positive value is supplied.
+const decimal DEFAULT_BATCH_RETRY_INTERVAL = 0.025;
+const decimal DEFAULT_MAX_BATCH_RETRY_INTERVAL = 1;
+const int DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS = 8;
+
+const string CONTENT_TYPE_HEADER = "content-type";
+const string TARGET_HEADER = "x-amz-target";
+const string REQUEST_ID_HEADER = "x-amzn-RequestId";
 
 # Represents the attribute types supported by Amazon DynamoDB.
 public enum AttributeType {

@@ -1,6 +1,6 @@
-// Copyright (c) 2021, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+// Copyright (c) 2021, WSO2 LLC. (http://www.wso2.com).
 //
-// WSO2 Inc. licenses this file to you under the Apache License,
+// WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
 // in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,557 +15,521 @@
 // under the License.
 
 import ballerina/lang.runtime;
-import ballerina/log;
-import ballerina/os;
-import ballerina/test;
 import ballerina/random;
-import ballerina/io;
+import ballerina/test;
+import ballerinax/aws;
+import ballerinax/aws.auth;
 
-configurable string accessKeyId = os:getEnv("ACCESS_KEY_ID");
-configurable string secretAccessKey = os:getEnv("SECRET_ACCESS_KEY");
-configurable string region = os:getEnv("REGION");
+@test:Config {groups: ["init"]}
+isolated function testInitUsingStaticAuthAndClose() returns error? {
+    Client dynamoDbClient = check newMockClient();
+    check dynamoDbClient.close();
+}
 
-float randomValue = random:createDecimal();
+@test:Config {groups: ["init"]}
+isolated function testUnresolvableCredentialsFailInit() {
+    Client|error result = new ({
+        region: awsRegion,
+        auth: {profileName: "no-such-profile", credentialsFilePath: "./tests/resources/no-such-credentials"},
+        endpoint: mockEndpoint
+    });
+    if result is Client {
+        test:assertFail("expected an error when the credentials cannot be resolved");
+    }
+    test:assertTrue(result is auth:CredentialResolutionError, "unexpected error: " + result.message());
+}
 
-final string mainTable = "Thread" + randomValue.toString();
-final string secondaryTable = "SecondaryThread" + randomValue.toString();
+@test:Config {groups: ["init"]}
+isolated function testInitUsingPlainRegionString() returns error? {
+    Client dynamoDbClient = check new ({
+        region: "us-east-1",
+        auth: {accessKeyId: "MOCKACCESSKEYID", secretAccessKey: "mock-secret-access-key"},
+        endpoint: mockEndpoint
+    });
+    check dynamoDbClient.close();
+}
 
-ConnectionConfig config = {
-    awsCredentials: {accessKeyId: accessKeyId, secretAccessKey: secretAccessKey},
-    region: region
-};
-
-Client dynamoDBClient = check new (config);
-
-@test:Config {}
-function testCreateTable() returns error? {
-    TableCreateInput payload = {
+@test:Config {groups: ["operations", "table"]}
+isolated function testCreateTable() returns error? {
+    resetMockState();
+    TableDescription description = check dynamoDb->createTable({
+        TableName: testTableName,
         AttributeDefinitions: [
-            {
-                AttributeName: "ForumName",
-                AttributeType: "S"
-            },
-            {
-                AttributeName: "Subject",
-                AttributeType: "S"
-            },
-            {
-                AttributeName: "LastPostDateTime",
-                AttributeType: "S"
-            }
+            {AttributeName: "GameId", AttributeType: S},
+            {AttributeName: "Score", AttributeType: N}
         ],
-        TableName: mainTable,
         KeySchema: [
-            {
-                AttributeName: "ForumName",
-                KeyType: HASH
-            },
-            {
-                AttributeName: "Subject",
-                KeyType: RANGE
-            }
+            {AttributeName: "GameId", KeyType: HASH},
+            {AttributeName: "Score", KeyType: RANGE}
         ],
-        LocalSecondaryIndexes: [
-            {
-                IndexName: "LastPostIndex",
-                KeySchema: [
-                    {
-                        AttributeName: "ForumName",
-                        KeyType: HASH
-                    },
-                    {
-                        AttributeName: "LastPostDateTime",
-                        KeyType: RANGE
-                    }
-                ],
-                Projection: {
-                    ProjectionType: KEYS_ONLY
-                }
-            }
-        ],
-        ProvisionedThroughput: {
-            ReadCapacityUnits: 5,
-            WriteCapacityUnits: 5
-        },
-        Tags: [
-            {
-                Key: "Owner",
-                Value: "BlueTeam"
-            }
-        ]
-    };
-    TableDescription createTablesResult = check dynamoDBClient->createTable(payload);
-    test:assertEquals(createTablesResult?.TableName, mainTable, "Thread table is not created.");
-    test:assertEquals(createTablesResult?.TableStatus, CREATING, "Table is not created.");
-    payload.TableName = secondaryTable;
-    createTablesResult = check dynamoDBClient->createTable(payload);
-    test:assertEquals(createTablesResult?.TableName, secondaryTable,
-                    "SecondaryThread table is not created.");
-    log:printInfo("Testing CreateTable is completed.");
-}
-
-@test:Config {
-    dependsOn: [testCreateTable]
-}
-function testDescribeTable() returns error? {
-    TableDescription response = check dynamoDBClient->describeTable(mainTable);
-    test:assertEquals(response?.TableName, mainTable, "Expected table is not described.");
-    log:printInfo("Testing DescribeTable is completed.");
-}
-
-@test:Config {
-    dependsOn: [testDescribeTable]
-}
-function updateTable() returns error? {
-    _ = check executeWithRetry(testUpdateTable, 20, 3);
-}
-
-function testUpdateTable() returns error? {
-    TableUpdateInput request = {
-        TableName: mainTable,
-        ProvisionedThroughput: {
-            ReadCapacityUnits: 10,
-            WriteCapacityUnits: 10
-        }
-    };
-    TableDescription response = check dynamoDBClient->updateTable(request);
-    ProvisionedThroughputDescription? provisionedThroughput = response?.ProvisionedThroughput;
-    if provisionedThroughput !is () {
-        test:assertEquals(provisionedThroughput?.ReadCapacityUnits, 5, "Read Capacity Units are not updated in table.");
-        test:assertEquals(provisionedThroughput?.WriteCapacityUnits, 5, "Write Capacity Units are not updated in table.");
-    }
-    log:printInfo("Testing UpdateTable is completed.");
-}
-
-@test:Config {
-    dependsOn: [updateTable]
-}
-function testListTables() returns error? {
-    stream<string, error?> response = check dynamoDBClient->listTables();
-    test:assertTrue(response.next() is record {|string value;|}, "Expected result is not obtained.");
-    check response.forEach(function(string tableName) {
-        log:printInfo(tableName);
+        ProvisionedThroughput: {ReadCapacityUnits: 5, WriteCapacityUnits: 5}
     });
-    log:printInfo("Testing ListTables is completed.");
+    test:assertEquals(description?.TableName, testTableName);
+    test:assertEquals(description?.TableStatus, CREATING);
+    test:assertEquals(lastTargetHeader(), TARGET_CREATE_TABLE);
+
+    // The request must carry the AWS wire names verbatim.
+    map<json> payload = check lastRequestPayload().ensureType();
+    test:assertEquals(payload["TableName"], testTableName);
+    test:assertTrue(payload.hasKey("AttributeDefinitions"));
+    test:assertTrue(payload.hasKey("KeySchema"));
 }
 
-@test:Config {
-    dependsOn: [testListTables]
+@test:Config {groups: ["operations", "table"]}
+isolated function testDescribeTable() returns error? {
+    resetMockState();
+    TableDescription description = check dynamoDb->describeTable(testTableName);
+    test:assertEquals(description?.TableName, testTableName);
+    test:assertEquals(description?.TableStatus, ACTIVE);
+    test:assertEquals(description?.ItemCount, 2);
+    KeySchemaElement[] keySchema = check description?.KeySchema.ensureType();
+    test:assertEquals(keySchema.length(), 2);
+    test:assertEquals(keySchema[0].AttributeName, "GameId");
+    test:assertEquals(keySchema[0].KeyType, HASH);
+    test:assertEquals(lastTargetHeader(), TARGET_DESCRIBE_TABLE);
 }
-function testPutItem() returns error? {
-    ItemCreateInput request = {
-        TableName: mainTable,
-        Item: {
-            "LastPostDateTime": {
-                "S": "201303190422"
-            },
-            "Tags": {
-                "SS": [
-                    "Update",
-                    "Multiple Items",
-                    "HelpMe"
+
+@test:Config {groups: ["operations", "table"]}
+isolated function testUpdateTable() returns error? {
+    resetMockState();
+    TableDescription description = check dynamoDb->updateTable({
+        TableName: testTableName,
+        ProvisionedThroughput: {ReadCapacityUnits: 10, WriteCapacityUnits: 10}
+    });
+    test:assertEquals(description?.TableStatus, UPDATING);
+    test:assertEquals(lastTargetHeader(), TARGET_UPDATE_TABLE);
+}
+
+@test:Config {groups: ["operations", "table"]}
+isolated function testDeleteTable() returns error? {
+    resetMockState();
+    TableDescription description = check dynamoDb->deleteTable(testTableName);
+    test:assertEquals(description?.TableStatus, DELETING);
+    test:assertEquals(lastTargetHeader(), TARGET_DELETE_TABLE);
+
+    map<json> payload = check lastRequestPayload().ensureType();
+    test:assertEquals(payload["TableName"], testTableName);
+}
+
+// The result set is three pages, the middle one empty but still carrying a continuation token. That page must be
+// skipped rather than mistaken for the end of the result set — and must not be indexed into.
+@test:Config {groups: ["operations", "table"]}
+isolated function testListTablesPaginatesAcrossAnEmptyPage() returns error? {
+    resetMockState();
+    stream<string, Error?> tables = check dynamoDb->listTables();
+    string[] names = [];
+    check from string name in tables
+        do {
+            names.push(name);
+        };
+    test:assertEquals(names, [testTableName, "OtherTable"]);
+    test:assertEquals(listTablesCallCount(), 3, "expected all three pages to be fetched");
+}
+
+@test:Config {groups: ["operations", "item"]}
+isolated function testCreateItem() returns error? {
+    resetMockState();
+    ItemDescription item = check dynamoDb->createItem({
+        TableName: testTableName,
+        Item: {"GameId": {S: "FlappyBird"}, "Score": {N: "500"}, "PlayerName": {S: "PlayerOne"}}
+    });
+    map<AttributeValue> attributes = check item?.Attributes.ensureType();
+    test:assertEquals(attributes["GameId"]?.S, "FlappyBird");
+    test:assertEquals(lastTargetHeader(), TARGET_PUT_ITEM);
+}
+
+@test:Config {groups: ["operations", "item"]}
+isolated function testGetItem() returns error? {
+    resetMockState();
+    ItemGetOutput output = check dynamoDb->getItem({
+        TableName: testTableName,
+        Key: {"GameId": {S: "FlappyBird"}, "Score": {N: "500"}}
+    });
+    map<AttributeValue> item = check output?.Item.ensureType();
+    // Attribute names are user data and must survive the round trip verbatim.
+    test:assertTrue(item.hasKey("PlayerName"), "expected the PlayerName attribute name to be preserved");
+    test:assertEquals(item["PlayerName"]?.S, "PlayerOne");
+    test:assertEquals(item["Score"]?.N, "500");
+    test:assertEquals(lastTargetHeader(), TARGET_GET_ITEM);
+}
+
+@test:Config {groups: ["operations", "item"]}
+isolated function testUpdateItem() returns error? {
+    resetMockState();
+    ItemDescription item = check dynamoDb->updateItem({
+        TableName: testTableName,
+        Key: {"GameId": {S: "FlappyBird"}, "Score": {N: "500"}},
+        UpdateExpression: "SET PlayerName = :name",
+        ExpressionAttributeValues: {":name": {S: "NewPlayer"}}
+    });
+    test:assertTrue(item?.Attributes is map<AttributeValue>);
+    test:assertEquals(lastTargetHeader(), TARGET_UPDATE_ITEM);
+
+    map<json> payload = check lastRequestPayload().ensureType();
+    test:assertEquals(payload["UpdateExpression"], "SET PlayerName = :name");
+}
+
+@test:Config {groups: ["operations", "item"]}
+isolated function testDeleteItem() returns error? {
+    resetMockState();
+    ItemDescription item = check dynamoDb->deleteItem({
+        TableName: testTableName,
+        Key: {"GameId": {S: "FlappyBird"}, "Score": {N: "500"}}
+    });
+    test:assertTrue(item?.Attributes is map<AttributeValue>);
+    test:assertEquals(lastTargetHeader(), TARGET_DELETE_ITEM);
+}
+
+// The first query page comes back empty while still carrying a continuation token.
+@test:Config {groups: ["operations", "query"]}
+isolated function testQueryPaginatesAcrossAnEmptyPage() returns error? {
+    resetMockState();
+    stream<QueryOutput, Error?> results = check dynamoDb->query({
+        TableName: testTableName,
+        KeyConditionExpression: "GameId = :gameId",
+        ExpressionAttributeValues: {":gameId": {S: "FlappyBird"}}
+    });
+    string[] players = [];
+    check from QueryOutput result in results
+        do {
+            map<AttributeValue> item = check result?.Item.ensureType();
+            players.push(item["PlayerName"]?.S ?: "");
+        };
+    test:assertEquals(players, ["PlayerOne", "PlayerThree"]);
+}
+
+@test:Config {groups: ["operations", "scan"]}
+isolated function testScanPaginates() returns error? {
+    resetMockState();
+    stream<ScanOutput, Error?> results = check dynamoDb->scan({TableName: testTableName});
+    string[] games = [];
+    check from ScanOutput result in results
+        do {
+            map<AttributeValue> item = check result?.Item.ensureType();
+            games.push(item["GameId"]?.S ?: "");
+        };
+    test:assertEquals(games, ["FlappyBird", "Tetris"]);
+    test:assertEquals(scanCallCount(), 2, "expected both scan pages to be fetched");
+}
+
+// The first batch leaves one key unprocessed; the iterator must re-request exactly those keys.
+@test:Config {groups: ["operations", "batch"]}
+isolated function testGetBatchItemsRetriesUnprocessedKeys() returns error? {
+    resetMockState();
+    stream<BatchItem, Error?> results = check dynamoDb->getBatchItems({
+        RequestItems: {
+            [testTableName]: {
+                Keys: [
+                    {"GameId": {S: "FlappyBird"}, "Score": {N: "500"}},
+                    {"GameId": {S: "Tetris"}, "Score": {N: "900"}}
                 ]
-            },
-            "ForumName": {
-                "S": "Amazon DynamoDB"
-            },
-            "Message": {
-                "S": "I want to update multiple items in a single call. What's the best way to do that?"
-            },
-            "Subject": {
-                "S": "How do I update multiple items?"
-            },
-            "LastPostedBy": {
-                "S": "fred@example.com"
-            }
-        },
-        ConditionExpression: "ForumName <> :f and Subject <> :s",
-        ReturnValues: ALL_OLD,
-        ReturnItemCollectionMetrics: SIZE,
-        ReturnConsumedCapacity: TOTAL,
-        ExpressionAttributeValues: {
-            ":f": {
-                "S": "Amazon DynamoDB"
-            },
-            ":s": {
-                "S": "How do I update multiple items?"
             }
         }
-    };
-
-    ItemDescription response = check dynamoDBClient->createItem(request);
-    log:printInfo(response.toString());
-    log:printInfo("Testing CreateItem is completed.");
-}
-
-@test:Config {
-    dependsOn: [testPutItem]
-}
-function testGetItem() returns error? {
-    ItemGetInput request = {
-        TableName: mainTable,
-        Key: {
-            "ForumName": {
-                "S": "Amazon DynamoDB"
-            },
-            "Subject": {
-                "S": "How do I update multiple items?"
-            }
-        },
-        ProjectionExpression: "LastPostDateTime, Message, Tags",
-        ConsistentRead: true,
-        ReturnConsumedCapacity: TOTAL
-    };
-    ItemGetOutput response = check dynamoDBClient->getItem(request);
-    log:printInfo(response?.Item.toString());
-    log:printInfo("Testing GetItem is completed.");
-}
-
-@test:Config {
-    dependsOn: [testGetItem]
-}
-function testUpdateItem() returns error? {
-    ItemUpdateInput request = {
-        TableName: mainTable,
-        Key: {
-            "ForumName": {
-                "S": "Amazon DynamoDB"
-            },
-            "Subject": {
-                "S": "How do I update multiple items?"
-            }
-        },
-        UpdateExpression: "set LastPostedBy = :val1",
-        ConditionExpression: "LastPostedBy = :val2",
-        ExpressionAttributeValues: {
-            ":val1": {
-                "S": "alice@example.com"
-            },
-            ":val2": {
-                "S": "fred@example.com"
-            }
-        },
-        ReturnValues: ALL_NEW,
-        ReturnConsumedCapacity: TOTAL,
-        ReturnItemCollectionMetrics: SIZE
-    };
-    ItemDescription response = check dynamoDBClient->updateItem(request);
-    log:printInfo(response.toString());
-    log:printInfo("Testing UpdateItem is completed.");
-}
-
-@test:Config {
-    dependsOn: [testUpdateItem]
-}
-function testQuery() returns error? {
-    QueryInput request = {
-        TableName: mainTable,
-        ConsistentRead: true,
-        KeyConditionExpression: "ForumName = :val",
-        ExpressionAttributeValues: {":val": {"S": "Amazon DynamoDB"}}
-    };
-    stream<QueryOutput, error?> response = check dynamoDBClient->query(request);
-    check response.forEach(function(QueryOutput resp) {
-        test:assertTrue(resp?.Item is map<AttributeValue>);
     });
-    log:printInfo("Testing Query is completed.");
+    string[] games = [];
+    check from BatchItem result in results
+        do {
+            test:assertEquals(result?.TableName, testTableName);
+            map<AttributeValue> item = check result?.Item.ensureType();
+            games.push(item["GameId"]?.S ?: "");
+        };
+    test:assertEquals(games, ["FlappyBird", "Tetris"]);
+    test:assertEquals(batchGetCallCount(), 2, "expected the unprocessed keys to be re-requested");
+
+    // The retry must ask only for what was left unprocessed, not for the original key set again.
+    map<json> payload = check lastRequestPayload().ensureType();
+    map<json> requestItems = check payload["RequestItems"].ensureType();
+    map<json> tableRequest = check requestItems[testTableName].ensureType();
+    json[] keys = check tableRequest["Keys"].ensureType();
+    test:assertEquals(keys.length(), 1);
 }
 
-@test:Config {
-    dependsOn: [testQuery]
-}
-function testScan() returns error? {
-    ScanInput request = {
-        TableName: mainTable,
-        FilterExpression: "LastPostedBy = :val",
-        ExpressionAttributeValues: {":val": {"S": "alice@example.com"}},
-        ReturnConsumedCapacity: TOTAL
-    };
-
-    stream<ScanOutput, error?> response = check dynamoDBClient->scan(request);
-    check response.forEach(function(ScanOutput resp) {
-        test:assertTrue(resp?.Item is map<AttributeValue>);
+// A table that is throttled continuously hands back the same keys unprocessed with no items. The iterator must
+// give up rather than re-request them in a tight loop, which is what AWS warns against.
+@test:Config {groups: ["operations", "batch"]}
+isolated function testGetBatchItemsGivesUpOnPersistentThrottling() returns error? {
+    resetMockState();
+    stream<BatchItem, Error?> results = check dynamoDb->getBatchItems({
+        RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
     });
-    log:printInfo("Testing Scan is completed.");
-}
 
-@test:Config {
-    dependsOn: [testScan]
-}
-function testWriteBatchItems() returns error? {
-    BatchItemInsertInput request = {
-        RequestItems: {
-            [secondaryTable]: [
-                {
-                    PutRequest: {
-                        Item: {
-                            "LastPostDateTime": {
-                                "S": "201303190423"
-                            },
-                            "Tags": {
-                                "SS": [
-                                    "Update",
-                                    "Multiple Items",
-                                    "HelpMe"
-                                ]
-                            },
-                            "ForumName": {
-                                "S": "Amazon S3"
-                            },
-                            "Message": {
-                                "S": "I want to update multiple items in a single call. What's the best way to do that?"
-                            },
-                            "Subject": {
-                                "S": "How do I update multiple items?"
-                            },
-                            "LastPostedBy": {
-                                "S": "john@example.com"
-                            }
-                        }
-                    }
-                },
-                {
-                    PutRequest: {
-                        Item: {
-                            "LastPostDateTime": {
-                                "S": "201303190423"
-                            },
-                            "Tags": {
-                                "SS": [
-                                    "Update",
-                                    "Multiple Items",
-                                    "HelpMe"
-                                ]
-                            },
-                            "ForumName": {
-                                "S": "Amazon DynamoDB"
-                            },
-                            "Message": {
-                                "S": "I want to update multiple items in a single call. What's the best way to do that?"
-                            },
-                            "Subject": {
-                                "S": "How do I update multiple items?"
-                            },
-                            "LastPostedBy": {
-                                "S": "fred@example.com"
-                            }
-                        }
-                    }
-                },
-                {
-                    PutRequest: {
-                        Item: {
-                            "LastPostDateTime": {
-                                "S": "201303190423"
-                            },
-                            "Tags": {
-                                "SS": [
-                                    "Update",
-                                    "Multiple Items",
-                                    "HelpMe"
-                                ]
-                            },
-                            "ForumName": {
-                                "S": "Amazon SimpleDB"
-                            },
-                            "Message": {
-                                "S": "I want to update multiple items in a single call. What's the best way to do that?"
-                            },
-                            "Subject": {
-                                "S": "How do I update multiple items?"
-                            },
-                            "LastPostedBy": {
-                                "S": "james@example.com"
-                            }
-                        }
-                    }
-                },
-                {
-                    PutRequest: {
-                        Item: {
-                            "LastPostDateTime": {
-                                "S": "201303190423"
-                            },
-                            "Tags": {
-                                "SS": [
-                                    "Update",
-                                    "Multiple Items",
-                                    "HelpMe"
-                                ]
-                            },
-                            "ForumName": {
-                                "S": "Amazon SES"
-                            },
-                            "Message": {
-                                "S": "I want to send an email using AWS SES. What's the best way to do that?"
-                            },
-                            "Subject": {
-                                "S": "How do I send a mail?"
-                            },
-                            "LastPostedBy": {
-                                "S": "anne@example.com"
-                            }
-                        }
-                    }
-                }
-            ]
-        },
-        ReturnConsumedCapacity: TOTAL
-    };
-
-    io:println(request.toString());
-
-    BatchItemInsertOutput response = check dynamoDBClient->writeBatchItems(request);
-    log:printInfo(response.toString());
-    log:printInfo("Testing WriteBatchItems(put) is completed.");
-}
-
-@test:Config {
-    dependsOn: [testWriteBatchItems]
-}
-function testGetBatchItems() returns error? {
-    BatchItemGetInput request = {
-        RequestItems: {
-            [mainTable]: {
-                Keys: [
-                    {
-                        "ForumName": {"S": "Amazon DynamoDB"},
-                        "Subject": {"S": "How do I update multiple items?"}
-                    }
-                ],
-                ProjectionExpression: "ForumName, Message"
-            },
-            [secondaryTable]: {
-                Keys: [
-                    {
-                        "ForumName": {"S": "Amazon S3"},
-                        "Subject": {"S": "How do I update multiple items?"}
-                    }
-                ],
-                ProjectionExpression: "ForumName, Message, LastPostedBy"
-            }
-        },
-        ReturnConsumedCapacity: TOTAL
-    };
-
-    stream<BatchItem, error?> response = check dynamoDBClient->getBatchItems(request);
-    check response.forEach(function(BatchItem item) {
-        log:printInfo(item?.Item.toString());
-    });
-    log:printInfo("Testing BatchGetItem is completed.");
-}
-
-@test:Config {
-    dependsOn: [testGetBatchItems]
-}
-function testDeleteItem() returns error? {
-    ItemDeleteInput request = {
-        TableName: mainTable,
-        Key: {
-            "ForumName": {
-                "S": "Amazon DynamoDB"
-            },
-            "Subject": {
-                "S": "How do I update multiple items?"
-            }
-        },
-        ReturnConsumedCapacity: TOTAL,
-        ReturnItemCollectionMetrics: SIZE,
-        ReturnValues: ALL_OLD
-    };
-    ItemDescription response = check dynamoDBClient->deleteItem(request);
-    log:printInfo(response.toString());
-    log:printInfo("Testing DeleteItem is completed.");
-}
-
-@test:Config {}
-function testDescribeLimits() returns error? {
-    LimitDescription response = check dynamoDBClient->describeLimits();
-    test:assertTrue(response?.AccountMaxReadCapacityUnits is int, "AccountMaxReadCapacityUnits in DescribeLimits is " +
-                    "not an integer.");
-    test:assertTrue(response?.AccountMaxWriteCapacityUnits is int, "AccountMaxWriteCapacityUnits in DescribeLimits is " +
-                    "not an integer.");
-    test:assertTrue(response?.TableMaxReadCapacityUnits is int, "TableMaxReadCapacityUnits in DescribeLimits is " +
-                    "not an integer.");
-    test:assertTrue(response?.TableMaxWriteCapacityUnits is int, "TableMaxWriteCapacityUnits in DescribeLimits is " +
-                    "not an integer.");
-    log:printInfo("Testing DescribeLimits is completed.");
-}
-
-@test:AfterSuite
-function deleteTables() returns error? {
-    _ = check executeWithRetry(testDeleteTable, 20, 3);
-}
-
-function testDeleteTable() returns error? {
-    TableDescription response = check dynamoDBClient->deleteTable(mainTable);
-    log:printInfo(response.toString());
-    test:assertEquals(response?.TableName, mainTable, "Expected table is not deleted.");
-    response = check dynamoDBClient->deleteTable(secondaryTable);
-    log:printInfo(response.toString());
-    test:assertEquals(response?.TableName, secondaryTable, "Expected table is not deleted.");
-    log:printInfo("Testing DeleteTable is completed.");
-}
-
-# Executes a given function with retry. If there is no error the function will 
-# immediately return. If there's errors it will retry as per given parameters. 
-#
-# + testFunc - Test function to execute
-# + delayBetweenRetries - Time delay between two retries in seconds
-# + maxRetryCount - Maximum count to retry before giving up
-# + errorMsg - (Optional) Part or exact error message to check. Retry will happen 
-# only if this matches with the error that is returned by executing the  testFunc. 
-# If not provided, retry will happen for any error returned by the testFunc. 
-# + return - Stream of Calendars on success or else an error
-function executeWithRetry(function () returns error? testFunc, decimal delayBetweenRetries,
-        int maxRetryCount, string? errorMsg = ()) returns error? {
-
-    int currentRetryCount = 0;
-    error? testResult = ();
-    while (currentRetryCount < maxRetryCount) {
-        if currentRetryCount > 0 {
-            runtime:sleep(delayBetweenRetries);
-            log:printWarn("Function returned an error. Retrying for "
-                + (currentRetryCount + 1).toString() + "th time");
-        }
-        testResult = testFunc();
-        currentRetryCount = currentRetryCount + 1;
-        if testResult is error {
-            if errorMsg == () {
-                continue;
-            } else {
-                if string:includes(testResult.message(), errorMsg, 0) {
-                    continue;
-                } else {
-                    break;
-                }
-            }
-        } else {
-            break;
-        }
+    // The first fetch succeeds — it simply serves nothing — so the failure surfaces as the stream is consumed.
+    record {|BatchItem value;|}|Error? next = results.next();
+    if next !is Error {
+        test:assertFail("expected the throttled batch to be abandoned");
     }
-    return testResult;
+    test:assertTrue(next.message().includes("consecutive attempt(s)"), "unexpected: " + next.message());
+    test:assertTrue(next.message().includes("1 key(s) still unprocessed"),
+            "the error should say how much of the batch was left: " + next.message());
+
+    // Bounded: the initial fetch plus its retries, rather than an unbounded spin.
+    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS);
 }
 
-@test:Config {
-    dependsOn: [testCreateTable]
-}
-function testCreateBackupAndDeleteBackup() returns error? {
-    BackupCreateInput backupRequest = {
-        TableName: mainTable,
-        BackupName: "ThreadBackup"
-    };
-    BackupDetails response = check dynamoDBClient->createBackup(backupRequest);
-    test:assertEquals(response.BackupName, "ThreadBackup");
-    string backupArn = response.BackupArn;
-    BackupDescription backupDescription = check dynamoDBClient->deleteBackup(backupArn);
-    test:assertEquals(backupDescription.BackupDetails?.BackupName, "ThreadBackup");
+// The retry budget is configurable, so a caller that wants to fail fast can say so.
+@test:Config {groups: ["operations", "batch"]}
+isolated function testBatchRetryBudgetIsConfigurable() returns error? {
+    resetMockState();
+    Client failFast = check newMockClient({initialInterval: 0.001, maxInterval: 0.002, maxUnproductiveAttempts: 2});
+    stream<BatchItem, Error?> results = check failFast->getBatchItems({
+        RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
+    });
+    record {|BatchItem value;|}|Error? next = results.next();
+    if next !is Error {
+        test:assertFail("expected the throttled batch to be abandoned");
+    }
+    test:assertTrue(next.message().includes("no items in 2 consecutive attempt(s)"), "unexpected: " + next.message());
+    test:assertEquals(batchGetCallCount(), 2, "expected no more attempts than the configured budget");
+    check failFast.close();
 }
 
-@test:Config {
-    dependsOn: [testCreateTable]
+@test:Config {groups: ["operations", "batch"]}
+isolated function testBatchRetryBudgetOfZeroFallsBackToDefault() returns error? {
+    resetMockState();
+    Client zeroBudget = check newMockClient({
+        initialInterval: 0.001,
+        maxInterval: 0.002,
+        maxUnproductiveAttempts: 0
+    });
+    stream<BatchItem, Error?> results = check zeroBudget->getBatchItems({
+        RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
+    });
+    record {|BatchItem value;|}|Error? next = results.next();
+    if next !is Error {
+        test:assertFail("expected the throttled batch to be abandoned");
+    }
+    test:assertTrue(next.message().includes(string `no items in ${DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS} consecutive`),
+            "unexpected: " + next.message());
+    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS,
+            "expected the default budget rather than an immediate abandon");
+    check zeroBudget.close();
 }
-function testTimeToLive() returns error? {
-    TTLDescription response = check dynamoDBClient->getTTL(mainTable);
-    test:assertEquals(response.TimeToLiveStatus, "DISABLED");
+
+// A non-positive value in any field is treated as unset and falls back to that field's default.
+@test:Config {groups: ["operations", "batch"]}
+isolated function testInvalidBatchRetryConfigFallsBackToDefaults() returns error? {
+    resetMockState();
+    Client invalid = check newMockClient({initialInterval: 0, maxInterval: -1, maxUnproductiveAttempts: -5});
+    stream<BatchItem, Error?> results = check invalid->getBatchItems({
+        RequestItems: {[TRIGGER_THROTTLE]: {Keys: [{"GameId": {S: "Tetris"}, "Score": {N: "900"}}]}}
+    });
+    record {|BatchItem value;|}|Error? next = results.next();
+    if next !is Error {
+        test:assertFail("expected the throttled batch to be abandoned");
+    }
+    test:assertTrue(next.message().includes(string `no items in ${DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS} consecutive`),
+            "unexpected: " + next.message());
+    test:assertEquals(batchGetCallCount(), DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS);
+    check invalid.close();
+}
+
+@test:Config {groups: ["operations", "batch"]}
+isolated function testWriteBatchItems() returns error? {
+    resetMockState();
+    BatchItemInsertOutput output = check dynamoDb->writeBatchItems({
+        RequestItems: {
+            [testTableName]: [
+                {PutRequest: {Item: {"GameId": {S: "Tetris"}, "Score": {N: "900"}}}},
+                {DeleteRequest: {Key: {"GameId": {S: "FlappyBird"}, "Score": {N: "100"}}}}
+            ]
+        }
+    });
+    test:assertEquals(output?.UnprocessedItems, {});
+    test:assertEquals(lastTargetHeader(), TARGET_BATCH_WRITE_ITEM);
+}
+
+@test:Config {groups: ["operations", "limits"]}
+isolated function testDescribeLimits() returns error? {
+    resetMockState();
+    LimitDescription limits = check dynamoDb->describeLimits();
+    test:assertEquals(limits?.AccountMaxReadCapacityUnits, 80000);
+    test:assertEquals(limits?.TableMaxWriteCapacityUnits, 40000);
+    test:assertEquals(lastTargetHeader(), TARGET_DESCRIBE_LIMITS);
+    // `DescribeLimits` takes no parameters, so the body must be an empty JSON object rather than an empty string.
+    test:assertEquals(lastRequestPayload(), {});
+}
+
+@test:Config {groups: ["operations", "backup"]}
+isolated function testCreateBackup() returns error? {
+    resetMockState();
+    BackupDetails details = check dynamoDb->createBackup({
+        TableName: testTableName,
+        BackupName: "HighScoresBackup"
+    });
+    test:assertEquals(details.BackupArn, MOCK_BACKUP_ARN);
+    test:assertEquals(details.BackupStatus, "CREATING");
+    test:assertEquals(lastTargetHeader(), TARGET_CREATE_BACKUP);
+}
+
+@test:Config {groups: ["operations", "backup"]}
+isolated function testDeleteBackup() returns error? {
+    resetMockState();
+    BackupDescription description = check dynamoDb->deleteBackup(MOCK_BACKUP_ARN);
+    BackupDetails details = check description?.BackupDetails.ensureType();
+    test:assertEquals(details.BackupStatus, "DELETED");
+    test:assertEquals(lastTargetHeader(), TARGET_DELETE_BACKUP);
+
+    map<json> payload = check lastRequestPayload().ensureType();
+    test:assertEquals(payload["BackupArn"], MOCK_BACKUP_ARN);
+}
+
+@test:Config {groups: ["operations", "ttl"]}
+isolated function testGetTTL() returns error? {
+    resetMockState();
+    TTLDescription ttl = check dynamoDb->getTTL(testTableName);
+    test:assertEquals(ttl?.AttributeName, "ExpiresAt");
+    test:assertEquals(ttl?.TimeToLiveStatus, ENABLED);
+    test:assertEquals(lastTargetHeader(), TARGET_DESCRIBE_TIME_TO_LIVE);
+}
+
+@test:Config {groups: ["protocol"]}
+isolated function testRequestIsSignedWithSigV4() returns error? {
+    resetMockState();
+    _ = check dynamoDb->describeTable(testTableName);
+    string authorization = lastAuthorizationHeader();
+    test:assertTrue(authorization.startsWith("AWS4-HMAC-SHA256 "), "unexpected scheme: " + authorization);
+    test:assertTrue(authorization.includes("Credential=MOCKACCESSKEYID/"), "unexpected credential: " + authorization);
+    // The credential scope must name the DynamoDB signing service and terminate with `aws4_request`.
+    test:assertTrue(authorization.includes("/dynamodb/aws4_request"), "unexpected scope: " + authorization);
+    test:assertTrue(authorization.includes("Signature="), "missing signature: " + authorization);
+}
+
+// DynamoDB speaks the AWS JSON 1.0 protocol, not plain `application/json`.
+@test:Config {groups: ["protocol"]}
+isolated function testRequestUsesJson10ContentType() returns error? {
+    resetMockState();
+    _ = check dynamoDb->describeTable(testTableName);
+    test:assertEquals(lastContentTypeHeader(), "application/x-amz-json-1.0");
+}
+
+@test:Config {groups: ["errors"]}
+isolated function testServiceFailureSurfacesStatusRequestIdAndBody() returns error? {
+    resetMockState();
+    TableDescription|Error result = dynamoDb->describeTable(TRIGGER_NOT_FOUND);
+    if result is TableDescription {
+        test:assertFail("expected the service failure to be reported as an error");
+    }
+    test:assertEquals(result.message(), "The DynamoDB operation failed with status 400");
+
+    aws:ErrorDetails detail = result.detail();
+    test:assertEquals(detail.httpStatusCode, 400);
+    test:assertEquals(detail.requestId, MOCK_REQUEST_ID);
+
+    // The qualified `__type` is reduced to the bare exception name.
+    test:assertEquals(detail.errorCode, "ResourceNotFoundException");
+    test:assertEquals(detail.errorMessage, "Requested resource not found");
+}
+
+// A failure body that is not the service's JSON 1.0 error document must still be reported, not swallowed.
+@test:Config {groups: ["errors"]}
+isolated function testNonJsonServiceFailureIsReported() returns error? {
+    resetMockState();
+    TableDescription|Error result = dynamoDb->describeTable(TRIGGER_NON_JSON_ERROR);
+    if result is TableDescription {
+        test:assertFail("expected the gateway failure to be reported as an error");
+    }
+    test:assertEquals(result.message(), "The DynamoDB operation failed with status 502");
+
+    aws:ErrorDetails detail = result.detail();
+    test:assertEquals(detail.httpStatusCode, 502);
+    // A body that is not the service's JSON 1.0 error document has no exception name to report, so the body
+    // itself becomes the message rather than being dropped.
+    test:assertEquals(detail.errorCode, "");
+    string errorMessage = check detail.errorMessage.ensureType();
+    test:assertTrue(errorMessage.includes("Bad Gateway"), "unexpected message: " + errorMessage);
+}
+
+// A failure raised while paginating must surface through the stream rather than truncating it silently.
+@test:Config {groups: ["errors"]}
+isolated function testStreamSurfacesServiceFailure() returns error? {
+    resetMockState();
+    // The first page is fetched eagerly, so a failure on it surfaces from the `scan` call itself.
+    stream<ScanOutput, Error?>|Error results = dynamoDb->scan({TableName: TRIGGER_NOT_FOUND});
+    if results !is Error {
+        test:assertFail("expected the scan failure to be reported as an error");
+    }
+    test:assertEquals(results.message(), "The DynamoDB operation failed with status 400");
+}
+
+@test:Config {groups: ["errors"]}
+isolated function testRequestGenerationErrorIsAnError() {
+    // The distinct error subtypes must remain assignable to the module's generic `Error`.
+    Error requestGeneration = error RequestGenerationError("cannot sign");
+    Error responseHandling = error ResponseHandlingError("cannot bind");
+    test:assertTrue(requestGeneration is RequestGenerationError);
+    test:assertTrue(responseHandling is ResponseHandlingError);
+
+    // Nothing reached the service on these two, so every detail field stays unset.
+    test:assertEquals(requestGeneration.detail(), <aws:ErrorDetails>{});
+    test:assertEquals(responseHandling.detail(), <aws:ErrorDetails>{});
+}
+
+@test:Config {groups: ["live"], enable: isLiveServer}
+function testLiveTableRoundTrip() returns error? {
+    Client liveClient = check newLiveClient();
+    // A fixed name collides when two runs overlap, and a table left behind by an earlier failure blocks every
+    // later run with `ResourceInUseException`. The shared prefix keeps any straggler easy to find.
+    string tableName = string `${testTableName}Live${check random:createIntInRange(1, 1000000000)}`;
+
+    string? playerName = ();
+    do {
+        _ = check liveClient->createTable({
+            TableName: tableName,
+            AttributeDefinitions: [{AttributeName: "GameId", AttributeType: S}],
+            KeySchema: [{AttributeName: "GameId", KeyType: HASH}],
+            BillingMode: PAY_PER_REQUEST
+        });
+        check waitUntilTableActive(liveClient, tableName);
+
+        _ = check liveClient->createItem({
+            TableName: tableName,
+            Item: {"GameId": {S: "FlappyBird"}, "PlayerName": {S: "PlayerOne"}}
+        });
+
+        ItemGetOutput output = check liveClient->getItem({
+            TableName: tableName,
+            Key: {"GameId": {S: "FlappyBird"}},
+            ConsistentRead: true
+        });
+        map<AttributeValue> item = check output?.Item.ensureType();
+        playerName = item["PlayerName"]?.S;
+
+        _ = check liveClient->deleteItem({TableName: tableName, Key: {"GameId": {S: "FlappyBird"}}});
+    } on fail error e {
+        // Best effort: the table may never have been created, so its deletion is allowed to fail too. Without
+        // this, a run that failed part way leaves the table behind in the shared account.
+        do {
+            _ = check liveClient->deleteTable(tableName);
+            check liveClient.close();
+        } on fail {
+            // Nothing further to do here — the original failure is the one worth reporting.
+        }
+        return e;
+    }
+
+    _ = check liveClient->deleteTable(tableName);
+    check liveClient.close();
+
+    // Asserted only once the table is gone: a failed assertion panics, and `on fail` does not catch a panic.
+    test:assertEquals(playerName, "PlayerOne");
+}
+
+@test:Config {groups: ["live"], enable: isLiveServer}
+function testLiveDescribeLimits() returns error? {
+    Client liveClient = check newLiveClient();
+    LimitDescription limits = check liveClient->describeLimits();
+    test:assertTrue(limits?.AccountMaxReadCapacityUnits is int);
+    check liveClient.close();
+}
+
+// A freshly created table is not immediately usable; poll DescribeTable until it goes ACTIVE.
+function waitUntilTableActive(Client liveClient, string tableName) returns error? {
+    foreach int _ in 0 ..< 60 {
+        TableDescription description = check liveClient->describeTable(tableName);
+        if description?.TableStatus == ACTIVE {
+            return;
+        }
+        runtime:sleep(2);
+    }
+    return error("the table did not become ACTIVE within the expected time");
 }

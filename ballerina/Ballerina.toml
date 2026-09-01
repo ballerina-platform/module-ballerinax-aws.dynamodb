@@ -1,11 +1,11 @@
 [package]
-distribution = "2201.11.0-20241218-101200-109f6cc7"
+distribution = "2201.12.0"
 org = "ballerinax"
 name = "aws.dynamodb"
-version = "2.4.0"
+version = "3.0.0"
 authors = ["Ballerina"]
 repository = "https://github.com/ballerina-platform/module-ballerinax-aws.dynamodb"
-keywords = ["Database/NoSQL", "Cost/Paid", "Vendor/Amazon", "Area/Database", "Type/Connector"]
+keywords = ["AWS", "Database", "NoSQL", "Vendor/Amazon", "Area/Database", "Type/Connector"]
 icon = "icon.png"
 license = ["Apache-2.0"]
 
