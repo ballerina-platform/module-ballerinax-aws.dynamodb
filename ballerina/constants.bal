@@ -46,7 +46,7 @@ const string JSON_CONTENT_TYPE = "application/x-amz-json-1.0";
 
 // Defaults for `BatchRetryConfig`, also used as the fallback when a non-positive value is supplied.
 const decimal DEFAULT_BATCH_RETRY_INTERVAL = 0.025;
-const decimal DEFAULT_MAX_BATCH_RETRY_INTERVAL = 1;
+const decimal DEFAULT_MAX_BATCH_RETRY_INTERVAL = 20;
 const int DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS = 8;
 
 const string CONTENT_TYPE_HEADER = "content-type";

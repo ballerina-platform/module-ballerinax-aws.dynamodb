@@ -86,12 +86,12 @@ public type ConnectionConfig record {|
 # treated as unset and falls back to that field's default.
 public type BatchRetryConfig record {|
     # The wait before the first retry, in seconds
-    decimal initialInterval = DEFAULT_BATCH_RETRY_INTERVAL;
+    decimal initialInterval = 0.025;
     # The ceiling the wait grows to, in seconds
-    decimal maxInterval = DEFAULT_MAX_BATCH_RETRY_INTERVAL;
+    decimal maxInterval = 20;
     # The most consecutive responses that may return no items at all: once that many have, the batch is
     # abandoned without a further request.
-    int maxUnproductiveAttempts = DEFAULT_MAX_UNPRODUCTIVE_BATCH_ATTEMPTS;
+    int maxUnproductiveAttempts = 8;
 |};
 
 # Describes the current provisioned-capacity quotas for your AWS account in a Region, both for the Region as a whole and
