@@ -41,7 +41,7 @@ public function main() returns error? {
     });
 
     Product[] catalog = loadCatalog();
-    io:println(string `Loading ${catalog.length()} products into '${tableName}'`);
+    io:println(string `Loading ${catalog.length()} products into the table`);
 
     // DynamoDB caps a batch write at 25 items and can decline part of a batch under load, so the writes are
     // chunked and whatever comes back as unprocessed is retried.
