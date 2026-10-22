@@ -1,0 +1,4 @@
+# ballerina:14 flags the `auth` record field. It is built from `configurable` values (accessKeyId, secretAccessKey)
+# declared with `= ?`, supplied by the user in Config.toml; nothing is hard coded.
+[rule]
+exclude = ["ballerina:14"]

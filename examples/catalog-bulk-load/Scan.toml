@@ -1,0 +1,4 @@
+# ballerina:14 flags the `auth` record field. It is assigned `auth:DEFAULT_CREDENTIALS`, an enum-like marker that
+# makes the client resolve credentials from the environment; no secret value is hard coded.
+[rule]
+exclude = ["ballerina:14"]
